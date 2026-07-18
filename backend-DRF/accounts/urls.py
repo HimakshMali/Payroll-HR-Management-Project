@@ -1,3 +1,5 @@
+from .views import GoogleRegisterView
+from .views import UserRegisterView
 from django.urls import path, include
 from .views import GoogleAuthenticationView, CustomTokenObtainPairView, EmployeeProfileViewSet
 from rest_framework_simplejwt.views import (
@@ -22,6 +24,8 @@ router.register(r'employees', EmployeeProfileViewSet, basename='employee')
 urlpatterns = [
     # Traditional API Endpoint Routes
     path('auth/google/', GoogleAuthenticationView.as_view(), name='auth_google'),
+    path('auth/register/google/', GoogleRegisterView.as_view(), name='auth_register_google'), # 👈 Added this path!
+    path('auth/register/', UserRegisterView.as_view(), name='auth_register'), 
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     

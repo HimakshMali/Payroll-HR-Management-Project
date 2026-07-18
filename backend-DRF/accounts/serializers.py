@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from dataclasses import fields
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -13,6 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'registration_method']
 
 class EmployeeProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     class Meta:
         model = EmployeeProfile
         fields = [
@@ -21,7 +23,29 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
             'base_salary', 'ifsc_code'
         ]
 
-        read_only_fields = ['id', 'tenant']
+        read_only_fields = ['id', 'tenant','user']
+
+        def validate(self,attrs):
+            request = self.context.get('request')
+
+            if not request or not hasattr(request.user,'employeeprofile'):
+                raise ValueError("User is not authenticated or does not have an employee profile.")
+            
+            active_operator = request.user.employeeprofile
+
+            if self.instance:
+                # If the logged-in user is not an OWNER, completely halt execution
+                if active_operator.role != 'OWNER':
+                    raise ValidationError("Access Denied: Employees do not possess edit permissions.")
+
+            return attrs
+
+            def create(self, validated_data):
+                request = self.context.get('request')
+                validated_data['tenant'] = request.user.employeeprofile.tenant
+                return super().create(validated_data)
+                
+
         #  the function below perevents passing tenant_id manually in the json pyload from frontend 
         # Because the tenant field is missing from the raw incoming data, 
         # Django needs a way to figure out which company this new worker belongs to before saving the row.
@@ -35,7 +59,7 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
-        token = super().get_token(User)
+        token = super().get_token(user)
         token['email'] = user.email
 
         if hasattr(user, 'employeeprofile'):
@@ -57,4 +81,21 @@ class GoogleAuthInputSerializer(serializers.Serializer):
     """
     token = serializers.CharField(required=True, help_text="Google OAuth2 ID Token string.")
             
-   
+
+# Add this to serializers.py
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+    class Meta:
+        model = User
+        fields = ['email', 'password']
+
+    def create(self, validated_data):
+        # We leverage your CustomUserManager's create_user method to handle password hashing automatically
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            registration_method='email'
+        )
+        return user

@@ -1,0 +1,217 @@
+/* Gives the sidebar a floating appearance over the main background */
+.sidebar-wrapper {
+    padding: 24px;
+    height: 100vh;
+    box-sizing: border-box;
+    background-color: transparent; 
+}
+
+.sidebar-modern {
+    width: 280px;
+    height: 100%;
+    /* Warm beige/off-white background matching reference */
+    background-color: #d7f9bc; 
+    border-radius: 24px; 
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.04);
+    padding: 32px 20px 20px 20px;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, sans-serif;
+    overflow-y: auto;
+}
+
+/* Hide scrollbar for a cleaner look */
+.sidebar-modern::-webkit-scrollbar {
+    display: none;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+    padding: 0 12px;
+}
+
+.brand-icon {
+    width: 26px;
+    height: 26px;
+    color: #1a1a1a;
+}
+
+.brand-logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #9a948c;
+    margin-bottom: 8px;
+    padding: 0 16px;
+    letter-spacing: 0.5px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: #4a453f;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    gap: 12px;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    color: #1a1a1a;
+}
+
+/* Crisp white pill background for active state */
+.nav-link.active {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+    font-weight: 600;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    color: inherit;
+    opacity: 0.8;
+}
+
+.icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.caret {
+    margin-left: auto;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+    opacity: 0.6;
+}
+
+.dropdown-toggle.open .caret {
+    transform: rotate(180deg);
+}
+
+.submenu {
+    padding-left: 46px; 
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.submenu-item {
+    font-size: 0.85rem;
+    color: #7a746c;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.submenu-item:hover {
+    color: #1a1a1a;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 24px;
+}
+
+.user-profile-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background-color: #e8e4db; 
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s;
+}
+
+.user-profile-pill:hover {
+    background-color: #ded9cd;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.user-email {
+    font-size: 0.75rem;
+    color: #7a746c;
+}
+
+.logout-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.4);
+    color: #4a453f;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logout-icon:hover {
+    background-color: #ffffff;
+    color: #e11d48; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}

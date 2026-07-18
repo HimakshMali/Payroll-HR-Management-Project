@@ -1,0 +1,329 @@
+:root {
+    --text-dark: #101828;
+    --text-muted: #667085;
+    --border-color: #d0d5dd;
+    --primary-black: #101828;
+}
+
+/* 1. Global Page Wrapper - Holds the network image across the entire screen */
+.page-wrapper {
+    min-height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* REPLACE THIS URL WITH YOUR NETWORK IMAGE */
+    background: url('https://images.pexels.com/photos/34991382/pexels-photo-34991382.jpeg') no-repeat center center;
+    background-size: cover;
+    padding: 24px;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* 2. Main Container Box */
+.auth-card {
+    display: flex;
+    width: 100%;
+    max-width: 1180px;
+    height: 640px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0px 24px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* 3. LEFT PANEL: Crisp, Solid White Form Section */
+.auth-left {
+    flex: 1;
+    background: #ffffff;
+    padding: 48px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+}
+
+.brand-header {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.brand-logo {
+    font-size: 1.2rem;
+}
+
+.auth-content {
+    margin: auto 0;
+    width: 100%;
+    max-width: 360px;
+}
+
+.input-field {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-field label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #344054;
+    margin-bottom: 6px;
+}
+
+.input-field input {
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.input-field input:focus {
+    border-color: var(--primary-black);
+}
+
+.password-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.password-hints span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-black);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.15s ease;
+}
+
+.submit-btn:hover {
+    background: #1c2738;
+}
+
+.divider {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #eaecf0;
+    z-index: 1;
+}
+
+.divider span {
+    background: #ffffff;
+    padding: 0 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    position: relative;
+    z-index: 2;
+}
+
+.social-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.google-signin-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #344054;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.google-signin-btn:hover {
+    background: #f9fafb;
+}
+
+.login-footer {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 28px;
+}
+
+.login-footer a {
+    color: var(--primary-black);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.terms-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Alert Boxes */
+.alert {
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+}
+.alert.success { background: #ecfdf3; color: #027a48; }
+.alert.error { background: #fef3f2; color: #b42318; }
+
+
+/* 4. RIGHT PANEL: Transparent Box Glassmorphism Illusion */
+.auth-right {
+    flex: 1;
+    /* Completely transparent color; only blurs the master background image behind it */
+    background: rgba(255, 255, 255, 0.08); 
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    box-sizing: border-box;
+}
+
+.glass-content {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.glass-content h2 {
+    font-size: 1.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 32px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    line-height: 1.3;
+}
+
+/* Floating internal UI element representation */
+.ui-mock-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: left;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    color: var(--text-dark);
+}
+
+.mock-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid #eaecf0;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #17b26a;
+}
+
+.mock-body .msg {
+    font-size: 0.85rem;
+    margin: 8px 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    line-height: 1.4;
+}
+
+.msg.incoming {
+    background: #f2f4f7;
+    color: var(--text-dark);
+    border-bottom-left-radius: 2px;
+}
+
+.msg.outgoing {
+    background: #d1fadf;
+    color: #027a48;
+    border-bottom-right-radius: 2px;
+}
+
+/* Responsiveness */
+@media (max-width: 900px) {
+    .auth-right {
+        display: none;
+    }
+    .auth-card {
+        max-width: 500px;
+        height: auto;
+    }
+}
+
+/* 5. Loading Overlay and Spinner */
+.form-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 5px solid #eaecf0;
+    border-top: 5px solid var(--primary-black);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.form-loading-overlay p {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin: 0;
+}

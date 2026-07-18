@@ -1,0 +1,366 @@
+/* The Main Glassmorphic Container */
+.glass-dashboard {
+    width: 100%;
+    max-width: 100%;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.6);
+    border-radius: 24px;
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    box-sizing: border-box;
+}
+
+/* Header Styling */
+.dashboard-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: #0f172a;
+}
+
+.logo-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    color: #0f172a;
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+.metric-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.metric-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.more-icon {
+    cursor: pointer;
+    letter-spacing: 2px;
+    color: #cbd5e1;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 400;
+    color: #0f172a;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.trend {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+
+.trend.positive {
+    background: #ecfdf5;
+    color: #10b981;
+}
+
+.trend.neutral {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.metric-context {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* Section Headings */
+.section-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #334155;
+    margin: 0 0 1rem 0;
+}
+
+/* Generic Glass Panel used for Activity and Inputs */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+    border-radius: 16px;
+}
+
+/* Activity Card */
+.activity-card {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.agent-badge {
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    border: 1px solid #f1f5f9;
+}
+
+.agent-badge .dot {
+    width: 6px;
+    height: 6px;
+    background-color: #10b981;
+    border-radius: 50%;
+}
+
+.activity-text {
+    font-size: 1.1rem;
+    color: #1e293b;
+    margin: 0;
+}
+
+.activity-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-modern {
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-modern.primary {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+.btn-modern.primary:hover {
+    background: #1e293b;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.btn-modern.secondary {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #475569;
+}
+
+.btn-modern.secondary:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+/* AI Agent Input Bars */
+.ai-interaction-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+.ai-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    transition: transform 0.2s ease;
+}
+
+.ai-input-wrapper:hover {
+    transform: translateY(-1px);
+}
+
+.search-icon {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    margin-right: 12px;
+}
+
+.ai-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.8rem 0;
+    font-size: 1rem;
+    color: #1e293b;
+    outline: none;
+    font-family: inherit;
+}
+
+.ai-input::placeholder {
+    color: #94a3b8;
+}
+
+/* Premium AI Search Input Wrapper */
+.premium-ai-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 16px;
+    padding: 6px 8px 6px 18px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    /* Soft glowing border/shadow animation with moving gradient colors */
+    animation: premiumGlow 6s infinite alternate ease-in-out;
+}
+
+.premium-ai-search:focus-within {
+    border-color: rgba(139, 92, 246, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.18), 0 2px 10px rgba(139, 92, 246, 0.08);
+}
+
+/* Color Fading Ambient Glow Animation (Agentic purple-blue-pink transition) */
+@keyframes premiumGlow {
+    0% {
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.04);
+    }
+    50% {
+        box-shadow: 0 10px 28px rgba(139, 92, 246, 0.2), 0 2px 10px rgba(139, 92, 246, 0.08);
+    }
+    100% {
+        box-shadow: 0 8px 24px rgba(236, 72, 153, 0.12), 0 2px 8px rgba(236, 72, 153, 0.04);
+    }
+}
+
+.magic-icon {
+    color: #8b5cf6;
+}
+
+.active-text {
+    font-weight: 500;
+    color: #0f172a;
+}
+
+/* Premium Ask AI Action Button */
+.premium-generate-btn {
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+.premium-generate-btn:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 100%);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
+    transform: translateY(-1px);
+}
+
+.premium-generate-btn:active {
+    transform: translateY(0);
+}
+
+.sparkle-icon {
+    font-size: 0.95rem;
+}
+
+/* Example Prompts Panel */
+.example-prompts {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 0 8px;
+}
+
+.prompts-label {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    margin-right: 4px;
+    font-weight: 500;
+}
+
+.prompt-pill {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+}
+
+.prompt-pill:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
