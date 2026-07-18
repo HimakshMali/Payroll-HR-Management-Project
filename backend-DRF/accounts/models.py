@@ -1,7 +1,11 @@
+from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.db import models
 import uuid
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils import timezone
+from django_rls.models import RLSModel
+from django_rls.policies import ModelPolicy, RLS
 
 
 
@@ -95,3 +99,64 @@ class User(AbstractUser):
     
     # todo: create the custome token pair obtain view to inject parameters like is_manager = true or not like that
     
+
+
+class EmployeeProfile(RLSModel):
+    ROLE_CHOICES = [
+        ('OWNER', 'Owner / HR Administrator'),
+        ('EMPLOYEE', 'Standard Employee'),
+    ]
+    tenant = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='employeeprofile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='EMPLOYEE')
+    phone_number = models.BigIntegerField(null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
+    date_of_joining = models.DateField(null=True, blank=True)
+    # department = models.CharField(max_length=100, null=True, blank=True)
+    pan_number = models.CharField(max_length=10, null=True, blank=True)
+    bank_account_number = models.CharField(max_length=20, null=True, blank=True)
+    base_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    ifsc_code = models.CharField(max_length=11, null=True, blank=True)
+
+    def clean(self):
+        super().clean()
+
+        if self.role == 'EMPLOYEE':
+            missing_fields = []
+
+            if not self.phone_number:
+                missing_fields.append("Phone Number")
+            if not self.address:
+                missing_fields.append("Address")
+            if not self.date_of_joining:
+                missing_fields.append("Date of Joining")
+            if not self.pan_number:
+                missing_fields.append("Pan Number")
+            if not self.bank_account_number:
+                missing_fields.append("Bank Account Number")
+            if not self.base_salary:
+                missing_fields.append("Base Salary")
+            if not self.ifsc_code:
+                missing_fields.append("Ifsc Code")
+
+            if missing_fields:
+                raise ValidationError({
+                    "role": f"Employee role requires the following fields: {', '.join(missing_fields)}"
+                })
+
+        elif self.role == 'OWNER':
+            self.base_salary = None
+            self.pan_number = None
+            self.aadhaar_number = None
+            self.bank_account_number = None
+            self.ifsc_code = None
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if not self.id:
+            self.id = generate_custom_id("EMP")
+            
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.role} ({self.tenant_id})"

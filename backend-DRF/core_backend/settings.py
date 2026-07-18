@@ -38,10 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-#    instaled apps and pacakages
+#    installed apps and packages
     'rest_framework',
     'rest_framework_simplejwt',
-    'google_auth',
     
 
     # our applications
