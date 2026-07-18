@@ -1,9 +1,10 @@
+
 from django.core.exceptions import ValidationError
 from dataclasses import fields
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
-from .models import EmployeeProfile, Organisation
+from .models import EmployeeProfile, Organisation,OrganisationProfile
 
 User = get_user_model()
 
@@ -12,6 +13,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'first_name', 'last_name', 'registration_method']
         read_only_fields = ['id', 'registration_method']
+
+class OrganisationProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganisationProfile
+        fields = ['id', 'org_name', 'org_desc', 'org_created_at', 'org_updated_at', 'org_phone_number', 'org_address', 'org_date_of_joining', 'org_pan_number', 'org_bank_account_number', 'org_base_salary', 'org_ifsc_code']
+        read_only_fields = ['id', 'org_created_at', 'organisation']
 
 class EmployeeProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

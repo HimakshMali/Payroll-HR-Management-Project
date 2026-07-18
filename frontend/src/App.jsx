@@ -24,6 +24,7 @@ import Login from './components/Login';
 import Home from './components/Home';
 import Profile from './components/Profile';
 import Sidebar from './components/Sidebar';
+import OrganizationProfile from './components/OrganizationProfile';
 import { AuthContext } from './components/AuthProvider';
 import './style/layout.css';
 
@@ -50,6 +51,8 @@ function App() {
                         <Route path="/agent" element={<Home />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="*" element={<Navigate to="/agent" replace />} />
+                        <Route path="/org" element={<OrganizationProfile />} />
+
                     </Routes>
                 </main>
             </div>

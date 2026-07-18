@@ -16,8 +16,24 @@ class Organisation(models.Model):
     def __str__(self):
         return self.name
 
-class OrganisationProfile():    
-    pass
+class OrganisationProfile(RLSModel):
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    org_name = models.CharField(max_length=100, null = True, blank = True)   
+    org_desc = models.TextField(null=True, blank=True) 
+    org_created_at = models.DateTimeField(auto_now_add=True) 
+    org_updated_at = models.DateTimeField(auto_now=True)
+    org_phone_number = models.IntegerField(null=True, blank=True)
+    org_address = models.TextField(null=True, blank=True)
+    org_date_of_joining = models.DateField(null=True, blank=True)
+    # department = models.CharField(max_length=100, null=True, blank=True)
+    org_pan_number = models.CharField(max_length=10, null=True, blank=True)
+    org_bank_account_number = models.CharField(max_length=20, null=True, blank=True)
+    org_base_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
+    org_ifsc_code = models.CharField(max_length=11, null=True, blank=True)
+    
+    def __str__(self):
+        return self.org_name
+    
 
 # we create baseusermaanager because django use the default Usermanager 
 # so to override it and to add customisation like here username is email as we dont need username here

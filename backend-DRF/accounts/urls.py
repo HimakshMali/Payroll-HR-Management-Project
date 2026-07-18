@@ -1,4 +1,5 @@
-from .views import GoogleRegisterView
+
+from .views import GoogleRegisterView, OrganisationProfileView
 from .views import UserRegisterView
 from django.urls import path, include
 from .views import GoogleAuthenticationView, CustomTokenObtainPairView, EmployeeProfileViewSet
@@ -28,7 +29,7 @@ urlpatterns = [
     path('auth/register/', UserRegisterView.as_view(), name='auth_register'), 
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    
+    path('organization/', OrganisationProfileView.as_view(), name='organization_profile'),
     # Include all the auto-generated CRUD routes from our router
     path('', include(router.urls)),
 ]

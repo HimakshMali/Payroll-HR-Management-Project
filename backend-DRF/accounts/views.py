@@ -1,6 +1,7 @@
-
-from .models import Organisation
-from .serializers import UserRegisterSerializer
+from django.shortcuts import get_object_or_404
+from rest_framework import generics
+from .models import Organisation, OrganisationProfile
+from .serializers import UserRegisterSerializer, OrganisationProfileSerializer
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -279,3 +280,18 @@ class UserRegisterView(APIView):
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class   OrganisationProfileView(generics.RetrieveAPIView):
+    serializer_class = OrganisationProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        # 1. Grab the logged-in user
+        user = self.request.user
+        
+        # 2. Get the tenant/organisation attached to their employee profile
+        # (This matches the logic in your CustomTokenObtainPairSerializer)
+        tenant = user.employeeprofile.tenant
+        
+        # 3. Fetch the unique profile for this organisation
+        return get_object_or_404(OrganisationProfile, organisation=tenant)
