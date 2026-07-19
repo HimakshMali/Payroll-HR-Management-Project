@@ -29,10 +29,11 @@ import { AuthContext } from './components/AuthProvider';
 import AddEmployee from './components/AddEmployee'; 
 import Employees from './components/Employees';
 import EmployeeDetailView from './components/EmployeeDetailView'; 
+import EmployeeFinance from './components/EmployeeFinance';
 import './style/layout.css';
 
 function App() {
-    const { isLoggedIn } = useContext(AuthContext);
+    const { isLoggedIn, userProfile, employeeProfile, loadingProfile } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const handleViewChange = (view) => {
@@ -46,18 +47,40 @@ function App() {
     };
 
     if (isLoggedIn) {
+        if (loadingProfile) {
+            return (
+                <div className="modern-loading-zone">
+                    <div className="ui-pulse-loader"></div>
+                    <p>Loading application...</p>
+                </div>
+            );
+        }
+
+        const isOwner = userProfile?.role === 'OWNER';
+
         return (
             <div className="app-layout">
                 <Sidebar />
                 <main className="main-content">
                     <Routes>
-                        <Route path="/agent" element={<Home />} />
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="/employees" element={<Employees />} />
-                        <Route path="/employees/:id" element={<EmployeeDetailView />} />
-                        <Route path="/org" element={<OrganizationProfile />} />
-                        <Route path="/add-employee" element={<AddEmployee />} />
-                        <Route path="*" element={<Navigate to="/agent" replace />} />
+                        {isOwner ? (
+                            <>
+                                <Route path="/agent" element={<Home />} />
+                                <Route path="/profile" element={<Profile />} />
+                                <Route path="/employees" element={<Employees />} />
+                                <Route path="/employees/:id" element={<EmployeeDetailView />} />
+                                <Route path="/employees/:id/finance" element={<EmployeeFinance />} />
+                                <Route path="/org" element={<OrganizationProfile />} />
+                                <Route path="/add-employee" element={<AddEmployee />} />
+                                <Route path="*" element={<Navigate to="/agent" replace />} />
+                            </>
+                        ) : (
+                            <>
+                                <Route path="/profile" element={<Profile />} />
+                                <Route path="/employees/:id/finance" element={<EmployeeFinance />} />
+                                <Route path="*" element={<Navigate to="/profile" replace />} />
+                            </>
+                        )}
                     </Routes>
                 </main>
             </div>
