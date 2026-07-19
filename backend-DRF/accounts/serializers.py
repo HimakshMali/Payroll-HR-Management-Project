@@ -30,13 +30,34 @@ class OrganisationProfileSerializer(serializers.ModelSerializer):
 class EmployeeCreateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True, validators=[])
+    
+    # Write-only salary component fields
+    basic_salary = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    special_allowence = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    house_rent_allowence = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    conveyance_allowence = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    phone_allowence = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    medical_allowence = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    deductions_EPF = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    deductions_ESI = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    deductions_TDS = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    deductions_professional_tax = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    deductions_other = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    employer_epf = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+    employer_esi = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, write_only=True)
+
     # We keep all EmployeeProfile fields, but mark `tenant` and `user` as read-only.
     class Meta:
         model = EmployeeProfile
         fields = [
-            'id', 'tenant', 'user', 'role', 'phone_number', 'address',
+            'id', 'tenant', 'user','first_name', 'middle_name', 'last_name', 'employment_type', 'role', 'phone_number', 'address',
             'date_of_joining', 'pan_number', 'aadhaar_number', 'bank_account_number',
-            'base_salary', 'ifsc_code', 'email', 'password'
+            'ifsc_code', 'email', 'password',
+            # Salary components write-only fields
+            'basic_salary', 'special_allowence', 'house_rent_allowence',
+            'conveyance_allowence', 'phone_allowence', 'medical_allowence',
+            'deductions_EPF', 'deductions_ESI', 'deductions_TDS',
+            'deductions_professional_tax', 'deductions_other', 'employer_epf', 'employer_esi'
         ]
         read_only_fields = ['id', 'tenant', 'user']  # tenant will be set from request
 
@@ -44,9 +65,6 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         # Force the role to be 'EMPLOYEE' – ignore whatever the frontend sends
         attrs['role'] = 'EMPLOYEE'
-        # Optional: if you want to be strict, raise an error if role != 'EMPLOYEE'
-        # if attrs.get('role') != 'EMPLOYEE':
-        #     raise serializers.ValidationError("Only 'EMPLOYEE' role can be created via this endpoint.")
         return attrs
 
     def validate_email(self, value):
@@ -56,9 +74,22 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         from django.db import transaction
+        from payroll.models import EmployeeCurrentSalaryComponents
         # Extract user fields
         email = validated_data.pop('email')
         password = validated_data.pop('password')
+
+        # Pop salary components
+        salary_fields = [
+            'basic_salary', 'special_allowence', 'house_rent_allowence',
+            'conveyance_allowence', 'phone_allowence', 'medical_allowence',
+            'deductions_EPF', 'deductions_ESI', 'deductions_TDS',
+            'deductions_professional_tax', 'deductions_other', 'employer_epf', 'employer_esi'
+        ]
+        salary_data = {}
+        for field in salary_fields:
+            if field in validated_data:
+                salary_data[field] = validated_data.pop(field)
 
         with transaction.atomic():
             # Create User (using your CustomUserManager)
@@ -75,20 +106,38 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
             validated_data['user'] = user
 
             # Create EmployeeProfile
-            return super().create(validated_data)
+            profile = super().create(validated_data)
+
+            # Update the automatically created salary components via post_save receiver
+            salary_component, _ = EmployeeCurrentSalaryComponents.objects.get_or_create(
+                tenant=tenant,
+                employee=profile
+            )
+            for key, val in salary_data.items():
+                setattr(salary_component, key, val)
+            salary_component.save()
+
+            return profile
 
 
 class EmployeeProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    basic_salary = serializers.SerializerMethodField()
+
     class Meta:
         model = EmployeeProfile
         fields = [
-            'id', 'tenant', 'user', 'role', 'phone_number', 'address', 
-            'date_of_joining', 'pan_number', 'bank_account_number', 
-            'base_salary', 'ifsc_code'
+            'id', 'tenant', 'user','first_name', 'middle_name', 'last_name', 'employment_type', 'role', 'phone_number', 'address', 
+            'date_of_joining', 'pan_number', 'aadhaar_number','bank_account_number', 
+            'ifsc_code', 'basic_salary'
         ]
 
         read_only_fields = ['id', 'tenant','user']
+
+    def get_basic_salary(self, obj):
+        from payroll.models import EmployeeCurrentSalaryComponents
+        salary = EmployeeCurrentSalaryComponents.objects.filter(employee=obj).first()
+        return salary.basic_salary if salary else None
 
     def validate(self, attrs):
         request = self.context.get('request')
@@ -153,9 +202,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         from django.db import transaction
         from .models import Organisation, EmployeeProfile
-
+        # Import your RLS context manager if django_rls provides one, or manage it atomically:
+        
         with transaction.atomic():
-            # We leverage your CustomUserManager's create_user method to handle password hashing automatically
             user = User.objects.create_user(
                 email=validated_data['email'],
                 password=validated_data['password'],
@@ -163,18 +212,23 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             )
             user.save()
 
-            # Create the Tenant organization row
             new_org = Organisation.objects.create(
                 name=f"{user.email.split('@')[0]}'s Organisation"
             )
 
-            # Create the EmployeeProfile ledger anchoring them as the OWNER of this tenant
-            EmployeeProfile.objects.create(
+            # Build the profile instance without running full_clean immediately if RLS blocks it,
+            # or explicitly define your fields out-of-box.
+            profile = EmployeeProfile(
                 tenant=new_org,
                 user=user,
                 role='OWNER',
                 phone_number=0,
                 address="Please update address details"
             )
+            
+            # If full_clean() inside save() keeps triggering the missing attribute error:
+            # You can temporarily bypass validation for the initial bootstrap OWNER account,
+            # or ensure your RLS context manager is wrapping this block.
+            profile.save()
 
         return user

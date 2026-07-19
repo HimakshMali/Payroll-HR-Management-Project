@@ -16,7 +16,7 @@ const Home = () => {
             try {
                 const response = await axiosInstance.get('/employees/');
                 const data = response.data || [];
-                const total = data.reduce((acc, emp) => acc + Number(emp.base_salary || 0), 0);
+                const total = data.reduce((acc, emp) => acc + Number(emp.basic_salary || 0), 0);
                 const avg = data.length ? Math.round(total / data.length) : 0;
                 setStats({
                     totalEmployees: data.length,
@@ -46,7 +46,7 @@ const Home = () => {
 
             {/* Metrics Grid dynamically linked to the database */}
             <div className="metrics-grid">
-                <div className="metric-card">
+                <div className="metric-card glass-agentic-card">
                     <div className="metric-top">
                         <span className="metric-label">Total Employees</span>
                         <span className="more-icon">...</span>
@@ -57,7 +57,7 @@ const Home = () => {
                     </div>
                     <p className="metric-context">Registered in organization</p>
                 </div>
-                <div className="metric-card">
+                <div className="metric-card glass-agentic-card">
                     <div className="metric-top">
                         <span className="metric-label">Monthly Payroll Spend</span>
                         <span className="more-icon">...</span>
@@ -67,7 +67,7 @@ const Home = () => {
                     </div>
                     <p className="metric-context">Total active salary commitments</p>
                 </div>
-                <div className="metric-card">
+                <div className="metric-card glass-agentic-card">
                     <div className="metric-top">
                         <span className="metric-label">Average Compensation</span>
                         <span className="more-icon">...</span>
@@ -81,7 +81,7 @@ const Home = () => {
 
             <section className="activity-section">
                 <h3 className="section-heading">Recent Agent Activity</h3>
-                <div className="activity-card">
+                <div className="activity-card glass-agentic-card">
                     <div className="activity-content">
                         <span className="agent-badge">
                             <span className="dot"></span> WhatsApp Agent
@@ -91,7 +91,7 @@ const Home = () => {
                         </p>
                     </div>
                     <div className="activity-actions">
-                        <button className="btn-modern primary">View Details</button>
+                        <button className="btn-modern primary agentic-btn">View Details</button>
                         <button className="btn-modern secondary">Reject</button>
                     </div>
                 </div>
@@ -99,16 +99,16 @@ const Home = () => {
 
             {/* DeepSeek style floating bottom search bar */}
             <section className="ai-interaction-section">
-                <div className="premium-ai-search">
+                <div className="premium-ai-search glass-agentic-card">
                     <span className="search-icon magic-icon">✨</span>
                     <input 
                         type="text" 
                         placeholder="What is this month payroll" 
-                        className="ai-input active-text"
+                        className="ai-input"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
-                    <button className="premium-generate-btn">
+                    <button className="premium-generate-btn agentic-btn">
                          Ask AI
                     </button>
                 </div>

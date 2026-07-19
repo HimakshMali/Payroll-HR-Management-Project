@@ -15,7 +15,6 @@ const Profile = () => {
         date_of_joining: '',
         pan_number: '',
         bank_account_number: '',
-        base_salary: '',
         ifsc_code: ''
     });
 
@@ -45,7 +44,6 @@ const Profile = () => {
             date_of_joining: emp.date_of_joining || '',
             pan_number: emp.pan_number || '',
             bank_account_number: emp.bank_account_number || '',
-            base_salary: emp.base_salary || '',
             ifsc_code: emp.ifsc_code || ''
         });
     };
@@ -93,7 +91,7 @@ const Profile = () => {
     const avatarUrl = `https://api.dicebear.com/10.x/notionists/svg?seed=${seedName}`;
     const isEditing = editingId === emp.id;
 
-    return (
+    return (    
         <div className="modern-profile-view">
             {error && (
                 <div className="modern-error-toast">
@@ -138,18 +136,9 @@ const Profile = () => {
                     {/* Metrics Grid */}
                     <div className="profile-metrics-grid">
                         <div className="metric-glass-tile">
-                            <span className="metric-lbl">Base Salary</span>
+                            <span className="metric-lbl">Basic Salary</span>
                             <span className="metric-val">
-                                {isEditing ? (
-                                    <input 
-                                        type="number" 
-                                        className="inline-glass-input" 
-                                        value={editForm.base_salary} 
-                                        onChange={(e) => setEditForm({...editForm, base_salary: e.target.value})} 
-                                    />
-                                ) : (
-                                    emp.base_salary ? `$${Number(emp.base_salary).toLocaleString()}` : '—'
-                                )}
+                                {emp.basic_salary ? `₹${Number(emp.basic_salary).toLocaleString()}` : '—'}
                             </span>
                         </div>
                         <div className="metric-glass-tile">

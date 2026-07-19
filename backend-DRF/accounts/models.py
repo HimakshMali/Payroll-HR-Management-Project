@@ -19,7 +19,8 @@ class Organisation(models.Model):
 class OrganisationProfile(RLSModel):
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
     org_name = models.CharField(max_length=100, null = True, blank = True)   
-    org_desc = models.TextField(null=True, blank=True) 
+    org_desc = models.TextField(null=True, blank=True)
+    number_of_employees = models.IntegerField(default=0, null=True, blank=True)
     org_created_at = models.DateTimeField(auto_now_add=True) 
     org_updated_at = models.DateTimeField(auto_now=True)
     org_phone_number = models.IntegerField(null=True, blank=True)
@@ -98,9 +99,20 @@ class EmployeeProfile(RLSModel):
         ('OWNER', 'Owner / HR Administrator'),
         ('EMPLOYEE', 'Standard Employee'),
     ]
+    EMPLOYMENT_TYPE_CHOICES = [
+        ('Full-time', 'Full-time'),
+        ('Part-time', 'Part-time'),
+        ('Contract', 'Contract'),
+        ('Internship', 'Internship'),
+        ('Temporary', 'Temporary'),
+    ]
     tenant = models.ForeignKey(Organisation, on_delete=models.CASCADE)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='employeeprofile')
+    first_name = models.CharField(max_length=100, null = True, blank = True)
+    middle_name = models.CharField(max_length=100, null = True, blank = True)   
+    last_name = models.CharField(max_length=100, null = True, blank = True)   
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='EMPLOYEE')
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, default='Full-time')
     phone_number = models.IntegerField(null=True, blank=True)
     address = models.TextField(null=True, blank=True)
     date_of_joining = models.DateField(null=True, blank=True)
@@ -108,7 +120,6 @@ class EmployeeProfile(RLSModel):
     pan_number = models.CharField(max_length=10, null=True, blank=True)
     aadhaar_number = models.CharField(max_length=12, null=True, blank=True)
     bank_account_number = models.CharField(max_length=20, null=True, blank=True)
-    base_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
     ifsc_code = models.CharField(max_length=11, null=True, blank=True)
 
     def clean(self):
@@ -127,8 +138,6 @@ class EmployeeProfile(RLSModel):
                 missing_fields.append("Pan Number")
             if not self.bank_account_number:
                 missing_fields.append("Bank Account Number")
-            if not self.base_salary:
-                missing_fields.append("Base Salary")
             if not self.ifsc_code:
                 missing_fields.append("Ifsc Code")
 
@@ -138,7 +147,6 @@ class EmployeeProfile(RLSModel):
                 })
 
         elif self.role == 'OWNER':
-            self.base_salary = None
             self.pan_number = None
             self.aadhaar_number = None
             self.bank_account_number = None

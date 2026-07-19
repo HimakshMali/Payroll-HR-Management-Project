@@ -28,6 +28,7 @@ import OrganizationProfile from './components/OrganizationProfile';
 import { AuthContext } from './components/AuthProvider';
 import AddEmployee from './components/AddEmployee'; 
 import Employees from './components/Employees';
+import EmployeeDetailView from './components/EmployeeDetailView'; 
 import './style/layout.css';
 
 function App() {
@@ -53,6 +54,7 @@ function App() {
                         <Route path="/agent" element={<Home />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/employees" element={<Employees />} />
+                        <Route path="/employees/:id" element={<EmployeeDetailView />} />
                         <Route path="/org" element={<OrganizationProfile />} />
                         <Route path="/add-employee" element={<AddEmployee />} />
                         <Route path="*" element={<Navigate to="/agent" replace />} />

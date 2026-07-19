@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import axiosInstance from './AxiosInstance';
-import '../style/profile.css'; // Leverage existing premium profile CSS styles
+import '../style/employeesList.css'; 
 
 const Employees = () => {
+    const navigate = useNavigate();
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -34,16 +36,31 @@ const Employees = () => {
     }
 
     return (
-        <div className="modern-profile-view" style={{ maxWidth: '1200px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
-                    <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 600, color: '#0f172a' }}>Organization Directory</h2>
-                    <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
-                        Manage and view all registered profiles within your active tenant organization.
-                    </p>
+        <div className="modern-profile-view">
+            {/* Header Section */}
+            <div className="emp-header-actions">
+                <div className="emp-header-title">
+                    <h2>{employees.length} Employee</h2>
+                    <p>Active team members within your organization</p>
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 600, background: '#ecfdf5', padding: '0.5rem 1rem', borderRadius: '30px' }}>
-                    Active Employees: {employees.length}
+                <div className="emp-header-controls">
+                    <button className="btn-emp-filter">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="4" y1="21" x2="4" y2="14"></line>
+                            <line x1="4" y1="10" x2="4" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12" y2="3"></line>
+                            <line x1="20" y1="21" x2="20" y2="16"></line>
+                            <line x1="20" y1="12" x2="20" y2="3"></line>
+                            <line x1="1" y1="14" x2="7" y2="14"></line>
+                            <line x1="9" y1="8" x2="15" y2="8"></line>
+                            <line x1="17" y1="16" x2="23" y2="16"></line>
+                        </svg>
+                        Filter
+                    </button>
+                    <button className="btn-emp-add" onClick={() => navigate('/add-employee')}>
+                        <span>+</span> Add Employee
+                    </button>
                 </div>
             </div>
 
@@ -54,86 +71,74 @@ const Employees = () => {
                 </div>
             )}
 
+            {/* Employee Grid */}
             {employees.length === 0 ? (
-                <div className="glass-profile-card" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+                <div className="glass-profile-card empty-state">
                     <p style={{ fontSize: '1.1rem', fontWeight: 500, margin: 0 }}>No employees onboarded yet.</p>
-                    <p style={{ fontSize: '0.9rem', margin: '0.5rem 0 0 0' }}>Go to "Add Employee" in the sidebar to onboard your first colleague.</p>
+                    <p style={{ fontSize: '0.9rem', margin: '0.5rem 0 0 0', color: '#64748b' }}>Click "Add Employee" to get started.</p>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '2rem' }}>
+                <div className="emp-grid">
                     {employees.map((emp) => {
-                        const seedName = emp.user?.first_name || 'User';
-                        const avatarUrl = `https://api.dicebear.com/10.x/notionists/svg?seed=${seedName}`;
+                        const avatarUrl = `https://api.dicebear.com/10.x/notionists/svg?seed=${emp.id}`;
                         return (
-                            <div key={emp.id} className="glass-profile-card" style={{ marginBottom: 0 }}>
-                                {/* Banner */}
-                                <div className="profile-card-banner" style={{ height: '80px' }}></div>
-
-                                {/* Header with identity */}
-                                <div className="profile-identity-header" style={{ marginTop: '-40px', padding: '0 1.5rem 1rem 1.5rem', gap: '1rem' }}>
-                                    <div className="avatar-wrapper-glass" style={{ width: '70px', height: '70px', padding: '4px' }}>
-                                        <img src={avatarUrl} alt="Avatar" className="notionist-avatar" />
+                            <div key={emp.id} className="glass-profile-card employee-card-modern">
+                                
+                                {/* Card Header */}
+                                <div className="emp-card-header">
+                                    <div className="emp-avatar-wrapper">
+                                        <img src={avatarUrl} alt="Avatar" className="emp-avatar-img" />
+                                        <span className="status-dot"></span>
                                     </div>
-                                    <div className="identity-text-group" style={{ marginBottom: 0 }}>
-                                        <div className="name-badge-row" style={{ gap: '0.35rem' }}>
-                                            <h3 style={{ fontSize: '1.15rem' }}>{emp.user?.first_name || 'User'} {emp.user?.last_name || ''}</h3>
-                                            <span className={`role-tag-pill ${emp.role?.toLowerCase()}`} style={{ fontSize: '0.55rem', padding: '0.15rem 0.5rem' }}>{emp.role}</span>
-                                        </div>
-                                        <p className="profile-email-sub" style={{ fontSize: '0.8rem' }}>{emp.user?.email}</p>
+                                    <div className="emp-card-info">
+                                        <h3>{emp.first_name || 'Name'} {emp.last_name || ''}</h3>
+                                        <span className="role-text">{emp.role || '—'}</span>
+                                    </div>
+                                    <button className="emp-card-menu" title="Manage">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <circle cx="12" cy="5" r="2" />
+                                            <circle cx="12" cy="12" r="2" />
+                                            <circle cx="12" cy="19" r="2" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Metrics (Salary & Date) */}
+                                <div className="emp-metrics-grid">
+                                    <div className="metric-glass-tile">
+                                        <span className="metric-lbl">Basic Salary</span>
+                                        <span className="metric-val">
+                                            {emp.basic_salary ? `₹${Number(emp.basic_salary).toLocaleString()}` : '—'}
+                                        </span>
+                                    </div>
+                                    <div className="metric-glass-tile">
+                                        <span className="metric-lbl">Joined Date</span>
+                                        <span className="metric-val">{emp.date_of_joining || '—'}</span>
                                     </div>
                                 </div>
 
-                                {/* Quick metrics */}
-                                <div className="profile-metrics-grid" style={{ padding: '0 1.5rem 1rem 1.5rem', gap: '0.75rem' }}>
-                                    <div className="metric-glass-tile" style={{ padding: '0.75rem' }}>
-                                        <span className="metric-lbl" style={{ fontSize: '0.6rem' }}>Base Salary</span>
-                                        <span className="metric-val" style={{ fontSize: '0.95rem' }}>{emp.base_salary ? `$${Number(emp.base_salary).toLocaleString()}` : '—'}</span>
+                                {/* Contact Footer */}
+                                <div className="emp-contact-footer">
+                                    <div className="contact-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                            <path d="M22 7l-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"></path>
+                                        </svg>
+                                        <span>{emp.user?.email || '—'}</span>
                                     </div>
-                                    <div className="metric-glass-tile" style={{ padding: '0.75rem' }}>
-                                        <span className="metric-lbl" style={{ fontSize: '0.6rem' }}>Joined Date</span>
-                                        <span className="metric-val" style={{ fontSize: '0.95rem' }}>{emp.date_of_joining || '—'}</span>
+                                    <div className="contact-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path>
+                                        </svg>
+                                        <span>{emp.phone_number || '—'}</span>
                                     </div>
                                 </div>
 
-                                {/* Body with personal and banking details */}
-                                <div className="profile-details-body" style={{ padding: '0 1.5rem 1.5rem 1.5rem' }}>
-                                    <div className="section-divider-title" style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
-                                        <span style={{ fontSize: '0.65rem' }}>Contact & Address</span>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ color: '#64748b' }}>Phone:</span>
-                                            <span style={{ fontWeight: 500, color: '#1e293b' }}>{emp.phone_number || '—'}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ color: '#64748b' }}>Address:</span>
-                                            <span style={{ fontWeight: 500, color: '#1e293b', maxWidth: '70%', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={emp.address}>
-                                                {emp.address || '—'}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="section-divider-title" style={{ marginTop: '1rem', marginBottom: '0.75rem' }}>
-                                        <span style={{ fontSize: '0.65rem' }}>Banking & Identity</span>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ color: '#64748b' }}>PAN:</span>
-                                            <span style={{ fontWeight: 500, color: '#1e293b' }} className="code-font">{emp.pan_number || '—'}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ color: '#64748b' }}>Aadhaar:</span>
-                                            <span style={{ fontWeight: 500, color: '#1e293b' }} className="code-font">{emp.aadhaar_number || '—'}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ color: '#64748b' }}>Account No:</span>
-                                            <span style={{ fontWeight: 500, color: '#1e293b' }} className="code-font">{emp.bank_account_number || '—'}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ color: '#64748b' }}>IFSC:</span>
-                                            <span style={{ fontWeight: 500, color: '#1e293b' }} className="code-font">{emp.ifsc_code || '—'}</span>
-                                        </div>
-                                    </div>
+                                {/* Footer Action */}
+                                <div className="emp-card-footer">
+                                    <Link to={`/employees/${emp.id}`} className="btn-emp-manage">
+                                        Manage Profile
+                                    </Link>
                                 </div>
                             </div>
                         );

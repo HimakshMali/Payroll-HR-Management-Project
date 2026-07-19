@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     # our applications
     'accounts',
+    'payroll'
 
 
 

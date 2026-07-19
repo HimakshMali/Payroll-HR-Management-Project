@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from './AuthProvider';
+import axiosInstance from './AxiosInstance';
 import '../style/sidebar.css';
 
 const Sidebar = () => {
@@ -8,7 +9,36 @@ const Sidebar = () => {
         return localStorage.getItem('sidebar-collapsed') === 'true';
     });
     const [isEmployeeOpen, setIsEmployeeOpen] = useState(false);
-    const { logout } = useContext(AuthContext);
+    const { logout, isLoggedIn, userProfile } = useContext(AuthContext);
+    const [profile, setProfile] = useState(null);
+
+    useEffect(() => {
+        let isMounted = true;
+        if (isLoggedIn) {
+            axiosInstance.get('/employees/me/')
+                .then(response => {
+                    if (isMounted) {
+                        setProfile(response.data);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching profile in sidebar:", err);
+                });
+        } else {
+            setProfile(null);
+        }
+        return () => {
+            isMounted = false;
+        };
+    }, [isLoggedIn]);
+
+    const displayName = profile?.first_name 
+        ? `${profile.first_name} ${profile.last_name || ''}`.trim() 
+        : (userProfile?.email?.split('@')[0] || 'User');
+    const displayEmail = profile?.user?.email || userProfile?.email || 'View Profile';
+    const seed = profile?.first_name || userProfile?.email || 'User';
+    const avatarUrl = `https://api.dicebear.com/10.x/notionists/svg?seed=${encodeURIComponent(seed)}`;
+
 
     const toggleCollapse = () => {
         setIsCollapsed(prev => {
@@ -86,16 +116,18 @@ const Sidebar = () => {
                             <span className="label">Employees</span>
                         </NavLink>
 
-                        <NavLink 
-                            to="/add-employee" 
-                            className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}
-                            data-tooltip={isCollapsed ? "Add Employee" : undefined}
-                        >
-                            <span className="icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                            </span>
-                            <span className="label">Add Employee</span>
-                        </NavLink>
+                        {userProfile?.role === 'OWNER' && (
+                            <NavLink 
+                                to="/add-employee" 
+                                className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}
+                                data-tooltip={isCollapsed ? "Add Employee" : undefined}
+                            >
+                                <span className="icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </span>
+                                <span className="label">Add Employee</span>
+                            </NavLink>
+                        )}
 
                         {/* Dropdown */}
                         <button 
@@ -115,7 +147,9 @@ const Sidebar = () => {
                         {isEmployeeOpen && !isCollapsed && (
                             <div className="submenu">
                                 <NavLink to="/employees" className={({isActive}) => `submenu-item ${isActive ? 'active' : ''}`}>View All</NavLink>
-                                <NavLink to="/add-employee" className={({isActive}) => `submenu-item ${isActive ? 'active' : ''}`}>Add New</NavLink>
+                                {userProfile?.role === 'OWNER' && (
+                                    <NavLink to="/add-employee" className={({isActive}) => `submenu-item ${isActive ? 'active' : ''}`}>Add New</NavLink>
+                                )}
                             </div>
                         )}
                     </div>
@@ -170,22 +204,46 @@ const Sidebar = () => {
                     {isCollapsed ? (
                         <div className="collapsed-footer">
                             <NavLink to="/profile" className="user-avatar-link" data-tooltip="Profile">
-                                <img src="https://ui-avatars.com/api/?name=User&background=1a1a1a&color=fff" alt="User Avatar" className="user-avatar" />
+                                <img src={avatarUrl} alt="User Avatar" className="user-avatar" />
                             </NavLink>
                             <button className="logout-btn-collapsed" onClick={(e) => { e.preventDefault(); logout(); }} aria-label="Logout" data-tooltip="Logout">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                             </button>
                         </div>
                     ) : (
-                        <NavLink to="/profile" className="user-profile-pill">
-                            <img src="https://ui-avatars.com/api/?name=User&background=1a1a1a&color=fff" alt="User Avatar" className="user-avatar" />
-                            <div className="user-info">
-                                <span className="user-name">User Profile</span>
-                                <span className="user-email">View Profile</span>
+                        <NavLink to="/profile" className="profile-motion-card">
+                            <div className="gradient-blob blob-1"></div>
+                            <div className="gradient-blob blob-2"></div>
+                            <div className="gradient-blob blob-3"></div>
+                            <div className="gradient-blob blob-4"></div>
+                            
+                            <div className="profile-card-content">
+                                <div className="profile-card-top">
+                                    <img src={avatarUrl} alt="User Avatar" className="profile-card-avatar" />
+                                    <button 
+                                        className="profile-card-logout" 
+                                        onClick={(e) => { 
+                                            e.preventDefault(); 
+                                            e.stopPropagation();
+                                            logout(); 
+                                        }} 
+                                        aria-label="Logout"
+                                        title="Logout"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                            <polyline points="16 17 21 12 16 7"></polyline>
+                                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="profile-card-pill">
+                                    <div className="profile-card-info">
+                                        <span className="profile-card-name">{displayName}</span>
+                                        <span className="profile-card-email">{displayEmail}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <button className="logout-icon" onClick={(e) => { e.preventDefault(); logout(); }} aria-label="Logout">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                            </button>
                         </NavLink>
                     )}
                 </div>
