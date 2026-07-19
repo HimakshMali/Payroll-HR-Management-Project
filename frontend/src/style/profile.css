@@ -1,146 +1,364 @@
-.profile-dashboard {
-    max-width: 1200px;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.modern-profile-view {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    padding: 2rem;
+    max-width: 1100px;
     margin: 0 auto;
-}
-
-.header-flex h2 {
-    font-size: 1.75rem;
-    color: #0f172a;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-}
-
-.error-banner {
-    background: #fef2f2;
-    border-left: 4px solid #ef4444;
-    padding: 1rem;
-    border-radius: 0.25rem;
-    margin-bottom: 1.5rem;
-    color: #991b1b;
-}
-
-.table-container {
-    background: #ffffff;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    border: 1px solid #f1f5f9;
-    overflow-x: auto;
-}
-
-.corporate-table {
     width: 100%;
-    border-collapse: collapse;
-    text-align: left;
+    box-sizing: border-box;
+    background: transparent;
 }
 
-.corporate-table th {
-    background-color: #f8fafc;
-    padding: 1rem 1.5rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748b;
-    font-weight: 600;
-    border-bottom: 1px solid #e2e8f0;
+/* Master Glassmorphic Card Container */
+.glass-profile-card {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 2.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.02);
 }
 
-.corporate-table td {
-    padding: 1.25rem 1.5rem;
-    vertical-align: top;
-    border-bottom: 1px solid #f1f5f9;
+.glass-profile-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.08);
 }
 
-.corporate-table tr:hover {
-    background-color: #fcfcfd;
+.card-active-edit {
+    border: 1px solid rgba(166, 245, 144, 0.4);
+    box-shadow: 0 8px 25px -8px rgba(166, 245, 144, 0.15);
 }
 
-.emp-name {
+/* Header Photo/Banner Element */
+.profile-card-banner {
+    height: 140px;
+    background: linear-gradient(145deg, #dbf7a2 0%, #9bef9a 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-gradient-accent {
+    display: none; /* Cleaned up to match the aesthetic's simple gradient blocks */
+}
+
+/* Identity Floating Layer */
+.profile-identity-header {
+    padding: 0 2rem 1rem 2rem;
+    display: flex;
+    align-items: flex-end;
+    position: relative;
+    margin-top: -55px;
+    gap: 1.5rem;
+}
+
+.avatar-wrapper-glass {
+    width: 90px;
+    height: 90px;
+    border-radius: 20px;
+    background: #ffffff;
+    padding: 6px;
+    box-shadow: 0 8px 20px rgba(129, 236, 138, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.notionist-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+    background: #f8fafc;
+}
+
+.identity-text-group {
+    flex-grow: 1;
+    margin-bottom: 0.5rem;
+}
+
+.name-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.name-badge-row h3 {
+    font-size: 1.5rem;
     font-weight: 600;
     color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.5px;
 }
 
-.emp-email {
-    font-size: 0.85rem;
+.verified-badge-pill {
+    background: #10b981; /* Changed to green to match the aesthetic */
+    color: white;
+    font-size: 0.65rem;
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: bold;
+}
+
+.profile-email-sub {
+    font-size: 0.9rem;
     color: #64748b;
-    margin-top: 0.25rem;
+    margin: 0.25rem 0 0 0;
+    font-weight: 400;
 }
 
-.emp-subtext {
-    font-size: 0.85rem;
-    color: #94a3b8;
-}
-
-.role-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
+/* Role Badges */
+.role-tag-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.65rem;
     font-weight: 600;
-    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.role-tag-pill.owner { background: #fef3c7; color: #92400e; }
+.role-tag-pill.manager { background: #e0f2fe; color: #0369a1; }
+.role-tag-pill.employee { background: #f1f5f9; color: #475569; }
+
+/* Action Buttons (Pills) */
+.profile-top-actions {
+    margin-bottom: 0.5rem;
 }
 
-.role-badge.owner { background: #f3e8ff; color: #7e22ce; }
-.role-badge.manager { background: #e0f2fe; color: #0369a1; }
-.role-badge.employee { background: #f1f5f9; color: #475569; }
-
-.banking-info {
+.btn-ui-configure, .btn-ui-cancel {
+    padding: 0.6rem 1.5rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 30px;
     font-size: 0.85rem;
+    font-weight: 500;
     color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.btn-ui-configure:hover, .btn-ui-cancel:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+.btn-ui-save {
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(145deg, #eef8a0 0%, #a6f590 100%);
+    color: #0f172a;
+    border: none;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(166, 245, 144, 0.15);
+    font-family: inherit;
+}
+
+.btn-ui-save:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 14px rgba(166, 245, 144, 0.25);
+}
+
+.glass-btn-cluster {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Metrics Display Strip */
+.profile-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 0 2rem 1.5rem 2rem;
+}
+
+.metric-glass-tile {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    padding: 1rem 1.25rem;
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
-.salary-text {
+.metric-lbl {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.metric-val {
+    font-size: 1.1rem;
     font-weight: 500;
-    color: #0f172a;
+    color: #1e293b;
 }
 
-.edit-stack {
+/* UI Divider Subtitles */
+.section-divider-title {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.section-divider-title:first-of-type {
+    margin-top: 0;
+}
+
+.section-divider-title span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Form & Layout Containers */
+.profile-details-body {
+    padding: 0 2rem 2rem 2rem;
+}
+
+.input-fields-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.input-fields-row-grid.triple-col {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.modern-input-wrapper {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.edit-input {
+.modern-input-wrapper label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+/* Soft Rounded Inputs */
+.glass-form-input, .glass-form-select, .inline-glass-input {
     width: 100%;
-    padding: 0.4rem 0.5rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 0.25rem;
-    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    color: #1e293b;
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    box-sizing: border-box;
 }
 
-.edit-input:focus {
-    border-color: #3b82f6;
+.glass-form-input:focus, .glass-form-select:focus, .inline-glass-input:focus {
+    border-color: rgba(166, 245, 144, 0.6);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(166, 245, 144, 0.1);
 }
 
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.text-right { text-align: right; }
+.inline-glass-input {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    border-radius: 10px;
+}
 
-.action-buttons {
+.static-data-field {
+    padding: 0.75rem 1rem;
+    background: rgba(248, 250, 252, 0.4);
+    border: 1px solid transparent;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    color: #334155;
+    font-weight: 500;
+}
+
+.code-font {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+}
+
+/* System State Elements */
+.modern-loading-zone {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    gap: 1.5rem;
+    color: #94a3b8;
+    font-size: 0.9rem;
 }
 
-.btn-edit, .btn-save, .btn-cancel {
-    padding: 0.4rem 1rem;
-    border-radius: 0.375rem;
-    font-size: 0.85rem;
+.ui-pulse-loader {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(166, 245, 144, 0.2);
+    border-radius: 50%;
+    border-top-color: #a6f590;
+    animation: spin 0.8s linear infinite;
+}
+
+.modern-error-toast {
+    background: #ffffff;
+    border: 1px solid rgba(239, 68, 68, 0.1);
+    padding: 1rem 1.5rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #dc2626;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
     font-weight: 500;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
-.btn-edit { background: #f1f5f9; color: #0f172a; }
-.btn-edit:hover { background: #e2e8f0; }
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 
-.btn-save { background: #10b981; color: white; }
-.btn-save:hover { background: #059669; }
+.truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mt-4 { margin-top: 1.5rem; }
 
-.btn-cancel { background: #fff; color: #64748b; border: 1px solid #cbd5e1; }
-.btn-cancel:hover { background: #f8fafc; }
+/* Responsive Design */
+@media (max-width: 600px) {
+    .modern-profile-view { padding: 1rem; }
+    .glass-profile-card { border-radius: 20px; }
+    .profile-identity-header { flex-wrap: wrap; margin-top: -40px; gap: 1rem; padding: 0 1.5rem 1rem 1.5rem; }
+    .avatar-wrapper-glass { width: 70px; height: 70px; }
+    .profile-metrics-grid { padding: 0 1.5rem 1rem 1.5rem; }
+    .profile-details-body { padding: 0 1.5rem 1.5rem 1.5rem; }
+    .input-fields-row-grid { grid-template-columns: 1fr; }
+    .input-fields-row-grid.triple-col { grid-template-columns: 1fr; }
+    .btn-ui-configure { width: 100%; justify-content: center; }
+    .glass-btn-cluster { flex-direction: column; width: 100%; }
+    .btn-ui-save, .btn-ui-cancel { width: 100%; justify-content: center; }
+    .profile-top-actions { width: 100%; margin-top: 0.5rem; }
+}

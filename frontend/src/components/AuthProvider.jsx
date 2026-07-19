@@ -28,6 +28,7 @@ const AuthProvider = ({ children }) => {
             const decoded = decodeJwt(token);
             if (decoded) {
                 setUserProfile({
+                    userId: decoded.user_id,
                     email: decoded.email,
                     tenantId: decoded.tenant_id,
                     role: decoded.role,

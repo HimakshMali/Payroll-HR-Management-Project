@@ -81,7 +81,7 @@ const Home = () => {
 
             <section className="activity-section">
                 <h3 className="section-heading">Recent Agent Activity</h3>
-                <div className="activity-card glass-panel">
+                <div className="activity-card">
                     <div className="activity-content">
                         <span className="agent-badge">
                             <span className="dot"></span> WhatsApp Agent
@@ -97,6 +97,7 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* DeepSeek style floating bottom search bar */}
             <section className="ai-interaction-section">
                 <div className="premium-ai-search">
                     <span className="search-icon magic-icon">✨</span>
@@ -108,7 +109,7 @@ const Home = () => {
                         onChange={(e) => setQuery(e.target.value)}
                     />
                     <button className="premium-generate-btn">
-                         Ask AI <span className="sparkle-icon">✨</span>
+                         Ask AI
                     </button>
                 </div>
 

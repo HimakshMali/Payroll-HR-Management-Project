@@ -106,6 +106,7 @@ class EmployeeProfile(RLSModel):
     date_of_joining = models.DateField(null=True, blank=True)
     # department = models.CharField(max_length=100, null=True, blank=True)
     pan_number = models.CharField(max_length=10, null=True, blank=True)
+    aadhaar_number = models.CharField(max_length=12, null=True, blank=True)
     bank_account_number = models.CharField(max_length=20, null=True, blank=True)
     base_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
     ifsc_code = models.CharField(max_length=11, null=True, blank=True)

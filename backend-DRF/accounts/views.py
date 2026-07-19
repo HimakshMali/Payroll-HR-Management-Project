@@ -1,11 +1,12 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from .models import Organisation, OrganisationProfile
-from .serializers import UserRegisterSerializer, OrganisationProfileSerializer
+from .serializers import UserRegisterSerializer, OrganisationProfileSerializer,EmployeeCreateSerializer
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.conf import settings
@@ -253,6 +254,24 @@ class EmployeeProfileViewSet(viewsets.ModelViewSet):
         # Force all SQL reads to include a strict 'WHERE tenant_id = ...' constraint
         return EmployeeProfile.objects.filter(tenant=active_tenant).select_related('user')
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return EmployeeCreateSerializer
+        return super().get_serializer_class()
+
+    @action(detail=False, methods=['get'], url_path='me')
+    def get_my_profile(self, request):
+        """Return the EmployeeProfile of the currently authenticated user."""
+        try:
+            profile = request.user.employeeprofile
+        except EmployeeProfile.DoesNotExist:
+            return Response(
+                {"detail": "No employee profile found for this user."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
     def destroy(self, request, *args, **kwargs):
         """
         Blocks accidental deletion of administrative Owners.
@@ -281,7 +300,7 @@ class UserRegisterView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class   OrganisationProfileView(generics.RetrieveAPIView):
+class OrganisationProfileView(generics.RetrieveAPIView):
     serializer_class = OrganisationProfileSerializer
     permission_classes = [IsAuthenticated]
 
