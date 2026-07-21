@@ -14,14 +14,16 @@ body {
 
 .app-layout {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
     width: 100vw;
     overflow: hidden;
+    background: radial-gradient(circle at top left, #f3fdf0 0%, #f8fafc 60%, #eff6ff 100%);
 }
 
 .main-content {
     flex: 1;
     padding: 2.5rem;
     overflow-y: auto;
-    background: radial-gradient(circle at top left, #f3fdf0 0%, #f8fafc 60%, #eff6ff 100%);
+    background: transparent;
 }

@@ -183,7 +183,7 @@ const Login = ({ onViewChange }) => {
                                 e.preventDefault();
                                 onViewChange('landing');
                             }}
-                            style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontWeight: 500 }}
+                            className="back-home-link"
                         >
                             ← Back to homepage
                         </a>

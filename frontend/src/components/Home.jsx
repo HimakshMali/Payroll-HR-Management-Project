@@ -3,13 +3,15 @@ import axiosInstance from './AxiosInstance';
 import '../style/home.css';
 
 const Home = () => {
+
+    
     const [stats, setStats] = useState({
         totalEmployees: 0,
         totalPayroll: 0,
         averageSalary: 0,
     });
+
     const [loading, setLoading] = useState(true);
-    const [query, setQuery] = useState("");
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -30,7 +32,47 @@ const Home = () => {
             }
         };
         fetchStats();
+
+
+
     }, []);
+
+    const [prompt, setPrompt] = useState('');
+  const [searchloading, setSearchLoading] = useState(false);
+  const [response, setResponse] = useState(null);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!prompt.trim()) return;
+
+        setSearchLoading(true);
+        setResponse(null);
+
+        try {
+            // POST to your new AI Agent endpoint using relative URL to base API
+            const res = await axiosInstance.post('../agent/search-command/', { prompt });
+            
+            // Store response (e.g. success or ambiguous message)
+            setResponse({
+                type: res.data.status,
+                message: res.data.message
+            });
+            
+            // Clear input only on success
+            if (res.data.status === 'success') {
+                setPrompt('');
+            }
+        } catch (err) {
+            // Handle missing employee, ambiguity, or API errors
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to process request';
+            setResponse({
+                type: 'error',
+                message: errorMsg
+            });
+        } finally {
+            setSearchLoading(false);
+        }
+    };
 
     return (
         <div className="glass-dashboard">
@@ -99,30 +141,47 @@ const Home = () => {
 
             {/* DeepSeek style floating bottom search bar */}
             <section className="ai-interaction-section">
-                <div className="premium-ai-search glass-agentic-card">
+                <form onSubmit={handleSubmit} className="premium-ai-search glass-agentic-card">
                     <span className="search-icon magic-icon">✨</span>
                     <input 
                         type="text" 
-                        placeholder="What is this month payroll" 
+                        placeholder="Enter command (e.g. Reimburse 1500 to Ravi for travel)" 
                         className="ai-input"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        disabled={searchloading}
                     />
-                    <button className="premium-generate-btn agentic-btn">
-                         Ask AI
+                    <button type="submit" className="premium-generate-btn agentic-btn" disabled={searchloading}>
+                         {searchloading ? 'Processing...' : 'Ask AI'}
                     </button>
-                </div>
+                </form>
+
+                {response && (
+                    <div className={`ai-response-box ${response.type}`}>
+                        <div className="response-header">
+                            <span className="response-indicator"></span>
+                            <span className="response-title">
+                                {response.type === 'success' 
+                                    ? 'AI Agent Success' 
+                                    : response.type === 'ambiguous' 
+                                        ? 'AI Agent Ambiguity' 
+                                        : 'AI Agent Error'}
+                            </span>
+                        </div>
+                        <p className="response-text">{response.message}</p>
+                    </div>
+                )}
 
                 <div className="example-prompts">
                     <span className="prompts-label">Try asking:</span>
-                    <button type="button" className="prompt-pill" onClick={() => setQuery("What is this month's payroll?")}>
-                        "What is this month's payroll?"
+                    <button type="button" className="prompt-pill" onClick={() => setPrompt("Give 10000 advance to Ravi for personal emergency")} disabled={searchloading}>
+                        "Give 10,000 advance to Ravi"
                     </button>
-                    <button type="button" className="prompt-pill" onClick={() => setQuery("Who has the highest advance?")}>
-                        "Who has highest advance?"
+                    <button type="button" className="prompt-pill" onClick={() => setPrompt("Reimburse 1500 to Sanya for client meeting food expense")} disabled={searchloading}>
+                        "Reimburse 1,500 to Sanya for food"
                     </button>
-                    <button type="button" className="prompt-pill" onClick={() => setQuery("Show manager details")}>
-                        "Show manager details"
+                    <button type="button" className="prompt-pill" onClick={() => setPrompt("Reimburse 3000 to Ravi for software subscription")} disabled={searchloading}>
+                        "Reimburse 3,000 to Ravi for software"
                     </button>
                 </div>
             </section>
