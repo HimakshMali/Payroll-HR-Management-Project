@@ -42,11 +42,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'openai',
+
     
 
     # our applications
     'accounts',
-    'payroll'
+    'payroll',
+    'whatsapp',
+    'ai_agent',
 
 
 
@@ -56,6 +60,11 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'accounts.User' 
 GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_OAUTH_CLIENT_SECET = config('GOOGLE_OAUTH_CLIENT_SECET')
+WHATSAPP_ACCESS_TOKEN = config('WHATSAPP_ACCESS_TOKEN', default='')
+WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default='')
+WHATSAPP_API_VERSION = config('WHATSAPP_API_VERSION', default='')
+WHATSAPP_VERIFY_TOKEN = config('WHATSAPP_VERIFY_TOKEN', default='')
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='').strip('"').strip("'")
 REST_FRAMEWORK = {
     
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -152,6 +161,8 @@ STATIC_URL = 'static/'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
 ]
 
 # Allow credentials like authorization headers to pass cleanly
