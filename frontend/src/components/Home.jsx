@@ -38,8 +38,8 @@ const Home = () => {
     }, []);
 
     const [prompt, setPrompt] = useState('');
-  const [searchloading, setSearchLoading] = useState(false);
-  const [response, setResponse] = useState(null);
+    const [searchloading, setSearchLoading] = useState(false);
+    const [response, setResponse] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -49,21 +49,23 @@ const Home = () => {
         setResponse(null);
 
         try {
-            // POST to your new AI Agent endpoint using relative URL to base API
             const res = await axiosInstance.post('../agent/search-command/', { prompt });
-            
-            // Store response (e.g. success or ambiguous message)
-            setResponse({
-                type: res.data.status,
-                message: res.data.message
-            });
-            
-            // Clear input only on success
-            if (res.data.status === 'success') {
-                setPrompt('');
+            if (res.data.status === 'requires_confirmation') {
+                setResponse({
+                    type: 'confirmation',
+                    message: res.data.message,
+                    details: res.data
+                });
+            } else {
+                setResponse({
+                    type: res.data.status,
+                    message: res.data.message
+                });
+                if (res.data.status === 'success') {
+                    setPrompt('');
+                }
             }
         } catch (err) {
-            // Handle missing employee, ambiguity, or API errors
             const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to process request';
             setResponse({
                 type: 'error',
@@ -72,6 +74,46 @@ const Home = () => {
         } finally {
             setSearchLoading(false);
         }
+    };
+
+    const handleConfirm = async () => {
+        if (!response || !response.details) return;
+
+        setSearchLoading(true);
+        const details = response.details;
+        setResponse(null);
+
+        try {
+            const res = await axiosInstance.post('../agent/search-command/', {
+                confirmed: true,
+                parsed_data: {
+                    intent: details.intent,
+                    employee_id: details.employee_id,
+                    amount: details.amount,
+                    reason: details.reason,
+                    category: details.category
+                }
+            });
+            setResponse({
+                type: res.data.status,
+                message: res.data.message
+            });
+            if (res.data.status === 'success') {
+                setPrompt('');
+            }
+        } catch (err) {
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to process request';
+            setResponse({
+                type: 'error',
+                message: errorMsg
+            });
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
+    const handleCancel = () => {
+        setResponse(null);
     };
 
     return (
@@ -86,7 +128,6 @@ const Home = () => {
                 <p className="subtitle">Your AI control room - monitoring employees, payroll, and actions</p>
             </header>
 
-            {/* Metrics Grid dynamically linked to the database */}
             <div className="metrics-grid">
                 <div className="metric-card glass-agentic-card">
                     <div className="metric-top">
@@ -139,23 +180,8 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* DeepSeek style floating bottom search bar */}
+            {/* SEARCH BAR WITH BACKGROUND GLOW BLOBS */}
             <section className="ai-interaction-section">
-                <form onSubmit={handleSubmit} className="premium-ai-search glass-agentic-card">
-                    <span className="search-icon magic-icon">✨</span>
-                    <input 
-                        type="text" 
-                        placeholder="Enter command (e.g. Reimburse 1500 to Ravi for travel)" 
-                        className="ai-input"
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        disabled={searchloading}
-                    />
-                    <button type="submit" className="premium-generate-btn agentic-btn" disabled={searchloading}>
-                         {searchloading ? 'Processing...' : 'Ask AI'}
-                    </button>
-                </form>
-
                 {response && (
                     <div className={`ai-response-box ${response.type}`}>
                         <div className="response-header">
@@ -165,12 +191,79 @@ const Home = () => {
                                     ? 'AI Agent Success' 
                                     : response.type === 'ambiguous' 
                                         ? 'AI Agent Ambiguity' 
-                                        : 'AI Agent Error'}
+                                        : response.type === 'confirmation'
+                                            ? 'AI Agent Confirmation'
+                                            : 'AI Agent Error'}
                             </span>
                         </div>
                         <p className="response-text">{response.message}</p>
+                        
+                        {response.type === 'confirmation' && response.details && (
+                            <div className="confirmation-details">
+                                <div className="detail-item">
+                                    <span className="detail-label">Action:</span>
+                                    <span className="detail-value">{response.details.intent === 'ADVANCE' ? 'Advance Payment' : 'Reimbursement Claim'}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">Employee:</span>
+                                    <span className="detail-value">{response.details.employee_name}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">Amount:</span>
+                                    <span className="detail-value">₹{response.details.amount.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">Reason:</span>
+                                    <span className="detail-value">{response.details.reason}</span>
+                                </div>
+                                {response.details.intent === 'REIMBURSEMENT' && (
+                                    <div className="detail-item">
+                                        <span className="detail-label">Category:</span>
+                                        <span className="detail-value">{response.details.category}</span>
+                                    </div>
+                                )}
+                                <div className="confirmation-actions">
+                                    <button 
+                                        type="button" 
+                                        className="btn-modern primary agentic-btn"
+                                        onClick={handleConfirm}
+                                        disabled={searchloading}
+                                    >
+                                        Approve
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        className="btn-modern secondary"
+                                        onClick={handleCancel}
+                                        disabled={searchloading}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
+
+                <div className="ai-bar-glow-container">
+                    {/* Glow blobs – behind the bar */}
+                    <div className="glow-blob glow-left"></div>
+                    <div className="glow-blob glow-right"></div>
+                    <form onSubmit={handleSubmit} className="google-search-bar">
+                        <span className="search-icon">🔍</span>
+                        <input 
+                            type="text" 
+                            placeholder="Enter command (e.g. Reimburse 1500 to Ravi for travel)" 
+                            className="ai-input"
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            disabled={searchloading}
+                        />
+                        <button type="submit" className="ask-ai-btn" disabled={searchloading}>
+                             {searchloading ? 'Processing...' : 'Ask AI'}
+                        </button>
+                    </form>
+                </div>
 
                 <div className="example-prompts">
                     <span className="prompts-label">Try asking:</span>

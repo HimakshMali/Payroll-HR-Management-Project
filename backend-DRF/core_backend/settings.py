@@ -167,3 +167,10 @@ CORS_ALLOWED_ORIGINS = [
 
 # Allow credentials like authorization headers to pass cleanly
 CORS_ALLOW_CREDENTIALS = True
+
+import sys
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }

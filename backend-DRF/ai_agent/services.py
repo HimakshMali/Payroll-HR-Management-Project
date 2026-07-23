@@ -161,7 +161,54 @@ def process_advance_payment_message(employee_id: int, user_text: str) -> Advance
     
 
 
-def process_search_command(tenant, promt_text : str):
+def process_search_command(tenant, promt_text : str = None, confirmed : bool = False, parsed_data : dict = None):
+    if confirmed and parsed_data:
+        intent = parsed_data.get("intent")
+        employee_id = parsed_data.get("employee_id")
+        amount = Decimal(str(parsed_data.get("amount", "0.00")))
+        reason = parsed_data.get("reason", "")
+        category = parsed_data.get("category", "OTHER")
+
+        try:
+            employee = EmployeeProfile.objects.get(id=employee_id, tenant=tenant)
+        except EmployeeProfile.DoesNotExist:
+            return {"status": "error", "message": "Employee not found."}
+
+        emp_name = f"{employee.first_name or employee.user.first_name or ''} {employee.last_name or employee.user.last_name or ''}".strip() or employee.user.email
+
+        if intent == 'ADVANCE':
+            record = AdvancePayment.objects.create(
+                tenant=employee.tenant,
+                employee=employee,
+                amount=amount,
+                reason=reason,
+            )
+            return {
+                "status": "success",
+                "type": "ADVANCE",
+                "message": f"Successfully created Advance Payment request of ₹{amount} for {emp_name}.",
+                "record_id": record.id
+            }
+        elif intent == "REIMBURSEMENT":
+            record = Reimbursement.objects.create(
+                tenant=tenant,
+                employee=employee,
+                amount=amount,
+                reason=reason,
+                category=category,
+                status='PENDING'
+            )
+            return {
+                "status": "success",
+                "type": "REIMBURSEMENT",
+                "message": f"Successfully logged Reimbursement claim of ₹{amount} under {category} for {emp_name}.",
+                "record_id": record.id
+            }
+        return {"status": "error", "message": "Could not determine transaction intent."}
+
+    if not promt_text:
+        return {"status": "error", "message": "Prompt is required."}
+
     try:
         response = client.models.generate_content(
             model='gemini-2.0-flash',
@@ -172,16 +219,29 @@ def process_search_command(tenant, promt_text : str):
             )
         )
     except Exception:
-        response = client.models.generate_content(
-            model='gemini-2.0-flash',
-            contents=f"{COMMAND_PARSER_PROMPT}\n\nUser Input: \"{promt_text}\"",
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.1
+        # Fallback to gemini-3.5-flash if gemini-2.0-flash has quota limits/issues
+        try:
+            response = client.models.generate_content(
+                model='gemini-3.5-flash',
+                contents=f"{COMMAND_PARSER_PROMPT}\n\nUser Input: \"{promt_text}\"",
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.1
+                )
             )
-        )
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"AI service is currently unavailable or quota is exhausted. Details: {str(e)}"
+            }
 
-    parsed = json.loads(response.text)
+    try:
+        parsed = json.loads(response.text)
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to parse AI response. Details: {str(e)}"
+        }
     employee_name = parsed.get('employee_name')
     intent = parsed.get("intent")
     amount = Decimal(str(parsed.get("amount", "0.00")))
@@ -191,9 +251,17 @@ def process_search_command(tenant, promt_text : str):
     if not employee_name:
         return {"status":"error","message":"Could not identify employee. Please try again"}
     
-    employees = EmployeeProfile.objects.filter(
-        tenant=tenant
+    from django.db.models import Value
+    from django.db.models.functions import Concat
+
+    employees = EmployeeProfile.objects.filter(tenant=tenant).annotate(
+        profile_full_name=Concat('first_name', Value(' '), 'last_name'),
+        user_full_name=Concat('user__first_name', Value(' '), 'user__last_name')
     ).filter(
+        Q(profile_full_name__icontains=employee_name) |
+        Q(first_name__icontains=employee_name) |
+        Q(last_name__icontains=employee_name) |
+        Q(user_full_name__icontains=employee_name) |
         Q(user__first_name__icontains=employee_name) |
         Q(user__last_name__icontains=employee_name) |
         Q(user__email__icontains=employee_name)
@@ -203,43 +271,30 @@ def process_search_command(tenant, promt_text : str):
         return {"status": "error", "message": f"No employee found with name matching '{employee_name}'."}
 
     if employees.count() > 1:
-        matched_names = ", ".join([f"{e.user.first_name} {e.user.last_name} (ID: {e.id})" for e in employees])
+        matched_names = ", ".join([
+            f"{e.first_name or e.user.first_name} {e.last_name or e.user.last_name} (ID: {e.id})".strip()
+            if (e.first_name or e.last_name or e.user.first_name or e.user.last_name)
+            else f"{e.user.email} (ID: {e.id})"
+            for e in employees
+        ])
         return {
             "status": "ambiguous",
             "message": f"Multiple employees matched '{employee_name}': {matched_names}. Please specify full name."
         }
 
     employee = employees.first()
+    emp_name = f"{employee.first_name or employee.user.first_name or ''} {employee.last_name or employee.user.last_name or ''}".strip() or employee.user.email
 
-    if intent == 'ADVANCE':
-        record = AdvancePayment.objects.create(
-            tenant=employee.tenant,
-            employee=employee,
-            amount=amount,
-            reason=reason,
-            # status='PENDING'
-        )
-
+    if intent in ['ADVANCE', 'REIMBURSEMENT']:
         return {
-            "status": "success",
-            "type": "ADVANCE",
-            "message": f"Successfully created Advance Payment request of ₹{amount} for {employee.user.first_name} {employee.user.last_name}.",
-            "record_id": record.id
-        }
-    elif intent == "REIMBURSEMENT":
-        record = Reimbursement.objects.create(
-            tenant=tenant,
-            employee=employee,
-            amount=amount,
-            reason=reason,
-            category=category,
-            status='PENDING'
-        )
-        return {
-            "status": "success",
-            "type": "REIMBURSEMENT",
-            "message": f"Successfully logged Reimbursement claim of ₹{amount} under {category} for {employee.user.first_name} {employee.user.last_name}.",
-            "record_id": record.id
+            "status": "requires_confirmation",
+            "intent": intent,
+            "employee_id": employee.id,
+            "employee_name": emp_name,
+            "amount": float(amount),
+            "reason": reason,
+            "category": category,
+            "message": f"Please confirm creating {intent.lower()} request of ₹{amount} for {emp_name}."
         }
 
     return {"status": "error", "message": "Could not determine transaction intent (ADVANCE or REIMBURSEMENT)."}

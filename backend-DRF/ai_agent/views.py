@@ -12,8 +12,8 @@ class AgentSearchBarView(APIView):
 
     def post(self, request):
         prompt = request.data.get("prompt")
-        if not prompt:
-            return Response({"error": "Prompt field is required."}, status=status.HTTP_400_BAD_REQUEST)
+        confirmed = request.data.get("confirmed", False)
+        parsed_data = request.data.get("parsed_data", None)
 
         # Extract current logged-in user's tenant
         user_profile = getattr(request.user, 'employeeprofile', None)
@@ -21,7 +21,12 @@ class AgentSearchBarView(APIView):
             return Response({"error": "No associated employee profile/tenant found."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Process command using service
-        result = process_search_command(tenant=user_profile.tenant, promt_text=prompt)
+        result = process_search_command(
+            tenant=user_profile.tenant,
+            promt_text=prompt,
+            confirmed=confirmed,
+            parsed_data=parsed_data
+        )
 
         if result.get("status") == "error":
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
