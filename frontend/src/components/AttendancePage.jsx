@@ -46,10 +46,12 @@ const AttendancePage = () => {
         fetchData();
     }, [selectedDate]);
 
-    // Map logs by employee ID for quick lookup
+    // Map logs by employee ID specifically for the selected date
     const logMap = {};
     attendanceLogs.forEach(log => {
-        logMap[log.employee] = log;
+        if (log.date === selectedDate) {
+            logMap[log.employee] = log;
+        }
     });
 
     const handleMarkStatus = async (employeeId, statusValue) => {
@@ -57,8 +59,10 @@ const AttendancePage = () => {
         const existingLog = logMap[employeeId];
 
         try {
-            if (existingLog) {
+            if (existingLog && existingLog.date === selectedDate) {
                 const res = await axiosInstance.patch(`../payroll/attendance/${existingLog.id}/`, {
+                    employee: employeeId,
+                    date: selectedDate,
                     status: statusValue,
                     is_lop: statusValue === 'Absent'
                 });
@@ -70,7 +74,7 @@ const AttendancePage = () => {
                     status: statusValue,
                     is_lop: statusValue === 'Absent'
                 });
-                setAttendanceLogs(prev => [...prev, res.data]);
+                setAttendanceLogs(prev => [...prev.filter(l => l.id !== res.data.id), res.data]);
             }
         } catch (err) {
             console.error("Failed to update attendance status:", err);
@@ -86,7 +90,7 @@ const AttendancePage = () => {
         try {
             const promises = employees.map(async (emp) => {
                 const existingLog = logMap[emp.id];
-                if (!existingLog) {
+                if (!existingLog || existingLog.date !== selectedDate) {
                     return axiosInstance.post('../payroll/attendance/', {
                         employee: emp.id,
                         date: selectedDate,
@@ -112,7 +116,7 @@ const AttendancePage = () => {
         return name.includes(searchTerm.toLowerCase());
     });
 
-    // Compute stats
+    // Compute stats for selectedDate
     const totalCount = employees.length;
     let presentCount = 0;
     let absentCount = 0;
@@ -121,11 +125,13 @@ const AttendancePage = () => {
     let holidayCount = 0;
 
     attendanceLogs.forEach(log => {
-        if (log.status === 'Present') presentCount++;
-        else if (log.status === 'Absent') absentCount++;
-        else if (log.status === 'Late') lateCount++;
-        else if (log.status === 'Leave') leaveCount++;
-        else if (log.status === 'Holiday') holidayCount++;
+        if (log.date === selectedDate) {
+            if (log.status === 'Present') presentCount++;
+            else if (log.status === 'Absent') absentCount++;
+            else if (log.status === 'Late') lateCount++;
+            else if (log.status === 'Leave') leaveCount++;
+            else if (log.status === 'Holiday') holidayCount++;
+        }
     });
 
     return (

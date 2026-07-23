@@ -94,8 +94,26 @@ class AttendanceLogViewSet(viewsets.ModelViewSet):
             return AttendanceLog.objects.none()
         
         if profile.role in ['OWNER', 'HR']:
-            return AttendanceLog.objects.filter(tenant=profile.tenant)
-        return AttendanceLog.objects.filter(tenant=profile.tenant, employee=profile)
+            queryset = AttendanceLog.objects.filter(tenant=profile.tenant)
+        else:
+            queryset = AttendanceLog.objects.filter(tenant=profile.tenant, employee=profile)
+
+        date_param = self.request.query_params.get('date')
+        if date_param:
+            queryset = queryset.filter(date=date_param)
+
+        employee_param = self.request.query_params.get('employee')
+        if employee_param:
+            queryset = queryset.filter(employee_id=employee_param)
+
+        month_param = self.request.query_params.get('month')
+        year_param = self.request.query_params.get('year')
+        if month_param:
+            queryset = queryset.filter(date__month=month_param)
+        if year_param:
+            queryset = queryset.filter(date__year=year_param)
+
+        return queryset
 
     def perform_create(self, serializer):
         profile = self.request.user.employeeprofile

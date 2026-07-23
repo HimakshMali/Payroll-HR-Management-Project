@@ -95,7 +95,7 @@ class MonthlySalarySerializer(serializers.ModelSerializer):
     class Meta:
         model = MonthlySalaryRecord
         fields = [
-            'id', 'employee_name', 'month', 'year', 'status',
+            'id', 'employee', 'employee_name', 'month', 'year', 'status',
             'basic_salary', 'special_allowence', 'house_rent_allowence', 'conveyance_allowence', 'phone_allowence', 'medical_allowence',
             'deductions_EPF', 'deductions_ESI', 'deductions_TDS', 'deductions_professional_tax', 'deductions_other',
             'lop_days', 'lop_deductions', 'approved_reimbursements', 'advances_deducted',

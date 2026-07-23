@@ -326,6 +326,9 @@ class MonthlySalaryRecord(RLSModel):
             pass
         
     def calculate_totals(self):
+        if not hasattr(self, 'employee_id') or not self.employee_id:
+            return
+
         if not self.basic_salary:
             self.copy_base_components()
 
@@ -337,42 +340,47 @@ class MonthlySalaryRecord(RLSModel):
             (self.special_allowence or Decimal('0.00'))
         )
 
-        # fetching lop from attemdence for given month and period
-
+        # fetching lop from attendance for given month and period
         lop_logs = AttendanceLog.objects.filter(
-            tenant = self.tenant,
-            employee = self.employee,
-            status = 'LOP',
-            date__month = self.month,
-            date__year = self.year,
-            is_lop = True
+            tenant=self.tenant,
+            employee_id=self.employee_id,
+            date__month=self.month,
+            date__year=self.year,
+            is_lop=True
         )
 
         self.lop_days = lop_logs.count()
         daily_rate = (self.basic_salary or Decimal('0.00')) / Decimal('30.00')
         calculated_lop = daily_rate * Decimal(self.lop_days)
 
-        override_sum  = lop_logs.aggregate(total=Sum('lop_override_amount'))['total'] or Decimal('0.00')
+        override_sum = lop_logs.aggregate(total=Sum('lop_override_amount'))['total'] or Decimal('0.00')
+        if override_sum > Decimal('0.00'):
+            self.lop_deductions = override_sum
+        else:
+            self.lop_deductions = calculated_lop
 
         reimb_sum = Reimbursement.objects.filter(
             tenant=self.tenant,
-            employee=self.employee,
-            status='APPROVED',
-            is_processed_in_salary=False
+            employee_id=self.employee_id,
+            status='APPROVED'
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        self.approved_reimbursements = reimb_sum
+
+        if reimb_sum > Decimal('0.00') or not self.approved_reimbursements:
+            self.approved_reimbursements = reimb_sum
 
         adv_sum = AdvancePayment.objects.filter(
             tenant=self.tenant,
-            employee=self.employee,
+            employee_id=self.employee_id,
             status='APPROVED'
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        self.advances_deducted = adv_sum 
+
+        if adv_sum > Decimal('0.00') or not self.advances_deducted:
+            self.advances_deducted = adv_sum 
 
         self.gross_salary = (
             (self.basic_salary or Decimal('0.00')) +
             (self.total_allowence or Decimal('0.00')) +
-            self.approved_reimbursements
+            (self.approved_reimbursements or Decimal('0.00'))
         )
 
         standard_deductions = (
@@ -383,7 +391,11 @@ class MonthlySalaryRecord(RLSModel):
             (self.deductions_other or Decimal('0.00'))
         )
 
-        self.total_deductions = standard_deductions + self.lop_deductions + self.advances_deducted
+        self.total_deductions = (
+            standard_deductions + 
+            (self.lop_deductions or Decimal('0.00')) + 
+            (self.advances_deducted or Decimal('0.00'))
+        )
         self.net_salary = self.gross_salary - self.total_deductions
         
         self.cost_to_company = (

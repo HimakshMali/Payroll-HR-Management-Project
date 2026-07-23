@@ -206,7 +206,7 @@ const EmployeeFinance = () => {
             amount: parseFloat(reimbursementForm.amount),
             reason: reimbursementForm.reason || null,
             status: reimbursementForm.status,
-            is_processed_in_salary: reimbursementForm.is_processed_in_salary,
+            is_processed_in_salary: reimbursementForm.status === 'PAID_WITH_PAYROLL' ? true : Boolean(reimbursementForm.is_processed_in_salary && reimbursementForm.status !== 'APPROVED'),
             payment_date: reimbursementForm.payment_date || null
         };
 

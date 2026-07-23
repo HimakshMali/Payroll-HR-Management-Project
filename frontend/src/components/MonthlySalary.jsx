@@ -131,9 +131,9 @@ const MonthlySalary = () => {
             setLinkedReimbursements(reimbs);
             setLinkedAdvances(advs);
 
-            // Sum ALL approved reimbursements that are not yet marked processed
+            // Sum ALL approved reimbursements awaiting salary payout
             const approvedReimbSum = reimbs
-                .filter(r => r.status === 'APPROVED' && !r.is_processed_in_salary)
+                .filter(r => r.status === 'APPROVED')
                 .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
 
             // Sum ALL approved advances
@@ -147,6 +147,15 @@ const MonthlySalary = () => {
 
                 const existingReimbVal = parseFloat(matching.approved_reimbursements || 0);
                 const existingAdvVal = parseFloat(matching.advances_deducted || 0);
+
+                const isDraft = !matching.status || matching.status === 'DRAFT';
+                const finalReimb = (isDraft && approvedReimbSum > 0)
+                    ? Math.max(existingReimbVal, approvedReimbSum).toFixed(2)
+                    : (existingReimbVal > 0 ? matching.approved_reimbursements : approvedReimbSum.toFixed(2));
+
+                const finalAdv = (isDraft && approvedAdvSum > 0)
+                    ? Math.max(existingAdvVal, approvedAdvSum).toFixed(2)
+                    : (existingAdvVal > 0 ? matching.advances_deducted : approvedAdvSum.toFixed(2));
 
                 setFormData({
                     basic_salary: matching.basic_salary || '0.00',
@@ -164,8 +173,8 @@ const MonthlySalary = () => {
                     
                     lop_days: matching.lop_days || '0',
                     lop_deductions: matching.lop_deductions || '0.00',
-                    approved_reimbursements: existingReimbVal > 0 ? matching.approved_reimbursements : approvedReimbSum.toFixed(2),
-                    advances_deducted: existingAdvVal > 0 ? matching.advances_deducted : approvedAdvSum.toFixed(2),
+                    approved_reimbursements: finalReimb,
+                    advances_deducted: finalAdv,
 
                     employer_epf: matching.employer_epf || '0.00',
                     employer_esi: matching.employer_esi || '0.00',
@@ -235,7 +244,7 @@ const MonthlySalary = () => {
     // Manual sync button handler for Reimbursements & Advances
     const handleSyncClaimsAndAdvances = () => {
         const approvedReimbSum = linkedReimbursements
-            .filter(r => r.status === 'APPROVED' && !r.is_processed_in_salary)
+            .filter(r => r.status === 'APPROVED')
             .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
 
         const approvedAdvSum = linkedAdvances
