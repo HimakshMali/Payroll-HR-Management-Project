@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from decimal import Decimal
 from django.db import models
 from django.conf import settings
@@ -55,7 +56,7 @@ class EmployeeCurrentSalaryComponents(RLSModel):
     #  functions
 
     def calculate_totals(self):
-        self.total_allowance = (
+        self.total_allowence = (
             (self.house_rent_allowence or Decimal('0.00')) +
             (self.conveyance_allowence or Decimal('0.00')) +
             (self.phone_allowence or Decimal('0.00')) +
@@ -187,11 +188,82 @@ class Reimbursement(RLSModel):
     
     def __str__(self):
         return f"{self.employee.user.email} - Claim: {self.amount} ({self.status})"
-# to work upon
-class MonthlySalaryRecord(RLSModel):
-    tenant = models.ForeignKey(Organisation,on_delete=models.CASCADE)
+# [Duplicate MonthlySalaryRecord definition removed to avoid conflict]
+
+
+
+class AttendanceLog(RLSModel):
+
+    STATUS_CHOICES = [
+        ('Present', 'Present'),
+        ('Absent', 'Absent'),
+        ('Late', 'Late'),
+        ('Holiday', 'Holiday'),
+        ('Leave', 'Leave'),
+    ]
+
+    tenant= models.ForeignKey(Organisation,on_delete=models.CASCADE)
     employee = models.ForeignKey(EmployeeProfile, on_delete=models.CASCADE)
+    date = models.DateField(null=True, blank=True)
+    check_in_time = models.TimeField(null=True, blank=True)
+    check_out_time = models.TimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     
+    is_lop = models.BooleanField(default=False, help_text="Triggers salary deduction if True")
+    lop_override_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    class Meta:
+        # Prevents duplicate entries for the same employee on the same date
+        unique_together = ('tenant', 'employee', 'date')
+
+    def __str__(self):
+        return f"{self.employee.user.get_full_name()} - {self.date} ({self.status})"
+
+
+
+
+
+
+
+class MonthlySalaryRecord(RLSModel):
+    MONTH_CHOICES =[
+        (1,'JANUARY'),
+        (2,'FEBUARY'),
+        (3,'MARCH'),
+        (4,'APRIL'),
+        (5,'MAY'),
+        (6,'JUNE'),
+        (7,'JULY'),
+        (8,'AUGUST'),
+        (9,'SEPTEMBER'),
+        (10,'OCTOBER'),
+        (11,'NOVEMBER'),
+        (12,'DECEMBER')
+    ]
+    
+
+    STATUS_CHOICES =[
+        ('DRAFT', 'Draft'),
+        ('GENERATED', 'Generated'),
+        ('APPROVED', 'Approved'),
+        ('PAID', 'Paid'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+
+    PAYMENT_TYPE_CHOICES = [
+        ('UPI', 'UPI'),
+        ('CASH', 'Cash'),
+        ('CHEQUE', 'Cheque'),
+        ('BANK_TRANSFER', 'Bank Transfer'),
+    ]
+
+    tenant = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    employee = models.ForeignKey(EmployeeProfile, on_delete=models.CASCADE)
+    month = models.IntegerField(choices=MONTH_CHOICES, null=True, blank=True, default=1)
+    year = models.IntegerField(null=True, blank=True, default=2026)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, null=True, blank=True, default='BANK_TRANSFER')
+    payment_date = models.DateField(null=True, blank=True)
+
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
     special_allowence = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
     house_rent_allowence = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
@@ -206,6 +278,11 @@ class MonthlySalaryRecord(RLSModel):
     deductions_professional_tax = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
     deductions_other = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
 
+    lop_days = models.IntegerField(default=0)
+    lop_deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    approved_reimbursements = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    advances_deducted = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    
     employer_epf = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
     employer_esi = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
 
@@ -217,6 +294,103 @@ class MonthlySalaryRecord(RLSModel):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
+    class Meta:
+        unique_together = ('tenant', 'employee', 'month', 'year')
+
     def __str__(self):
-        return f"{self.employee} - {self.tenant}"
+        return f"{self.employee} - {self.month} - {self.year} - {self.status}"
+
+    def copy_base_components(self):
+        try:
+            comp = EmployeeCurrentSalaryComponents.objects.get(
+                tenant = self.tenant,
+                employee = self.employee
+            )
+
+            self.basic_salary = comp.basic_salary
+            self.special_allowence = comp.special_allowence
+            self.house_rent_allowence = comp.house_rent_allowence
+            self.conveyance_allowence = comp.conveyance_allowence
+            self.phone_allowence = comp.phone_allowence
+            self.medical_allowence = comp.medical_allowence
+            self.deductions_EPF = comp.deductions_EPF
+            self.deductions_ESI = comp.deductions_ESI
+            self.deductions_TDS = comp.deductions_TDS
+            self.deductions_professional_tax = comp.deductions_professional_tax
+            self.deductions_other = comp.deductions_other
+            self.employer_epf = comp.employer_epf
+            self.employer_esi = comp.employer_esi
+
+        except EmployeeCurrentSalaryComponents.DoesNotExist:
+            pass
+        
+    def calculate_totals(self):
+        if not self.basic_salary:
+            self.copy_base_components()
+
+        self.total_allowence = (
+            (self.house_rent_allowence or Decimal('0.00')) +
+            (self.conveyance_allowence or Decimal('0.00')) +
+            (self.phone_allowence or Decimal('0.00')) +
+            (self.medical_allowence or Decimal('0.00')) +
+            (self.special_allowence or Decimal('0.00'))
+        )
+
+        # fetching lop from attemdence for given month and period
+
+        lop_logs = AttendanceLog.objects.filter(
+            tenant = self.tenant,
+            employee = self.employee,
+            status = 'LOP',
+            date__month = self.month,
+            date__year = self.year,
+            is_lop = True
+        )
+
+        self.lop_days = lop_logs.count()
+        daily_rate = (self.basic_salary or Decimal('0.00')) / Decimal('30.00')
+        calculated_lop = daily_rate * Decimal(self.lop_days)
+
+        override_sum  = lop_logs.aggregate(total=Sum('lop_override_amount'))['total'] or Decimal('0.00')
+
+        reimb_sum = Reimbursement.objects.filter(
+            tenant=self.tenant,
+            employee=self.employee,
+            status='APPROVED',
+            is_processed_in_salary=False
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        self.approved_reimbursements = reimb_sum
+
+        adv_sum = AdvancePayment.objects.filter(
+            tenant=self.tenant,
+            employee=self.employee,
+            status='APPROVED'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        self.advances_deducted = adv_sum 
+
+        self.gross_salary = (
+            (self.basic_salary or Decimal('0.00')) +
+            (self.total_allowence or Decimal('0.00')) +
+            self.approved_reimbursements
+        )
+
+        standard_deductions = (
+            (self.deductions_EPF or Decimal('0.00')) +
+            (self.deductions_ESI or Decimal('0.00')) +
+            (self.deductions_TDS or Decimal('0.00')) +
+            (self.deductions_professional_tax or Decimal('0.00')) +
+            (self.deductions_other or Decimal('0.00'))
+        )
+
+        self.total_deductions = standard_deductions + self.lop_deductions + self.advances_deducted
+        self.net_salary = self.gross_salary - self.total_deductions
+        
+        self.cost_to_company = (
+            self.gross_salary +
+            (self.employer_epf or Decimal('0.00')) +
+            (self.employer_esi or Decimal('0.00'))
+        )
+    def save(self, *args, **kwargs):
+        self.calculate_totals()
+        super().save(*args, **kwargs)

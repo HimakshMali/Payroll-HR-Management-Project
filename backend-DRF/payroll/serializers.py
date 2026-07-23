@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from .models import EmployeeCurrentSalaryComponents, AdvancePayment,Reimbursement
+from .models import EmployeeCurrentSalaryComponents, AdvancePayment,Reimbursement,AttendanceLog,MonthlySalaryRecord
 
 
 
@@ -88,3 +88,24 @@ class ReimbursementSerializer(serializers.ModelSerializer):
                     })
 
         return attrs
+
+
+class MonthlySalarySerializer(serializers.ModelSerializer):
+    employee_name = serializers.CharField(source='employee.user.email', read_only=True)
+    class Meta:
+        model = MonthlySalaryRecord
+        fields = [
+            'id', 'employee_name', 'month', 'year', 'status',
+            'basic_salary', 'special_allowence', 'house_rent_allowence', 'conveyance_allowence', 'phone_allowence', 'medical_allowence',
+            'deductions_EPF', 'deductions_ESI', 'deductions_TDS', 'deductions_professional_tax', 'deductions_other',
+            'lop_days', 'lop_deductions', 'approved_reimbursements', 'advances_deducted',
+            'employer_epf', 'employer_esi',
+            'total_allowence', 'gross_salary', 'total_deductions', 'net_salary', 'cost_to_company',
+            'payment_type', 'payment_date', 'created_at', 'updated_at'
+        ]
+
+class AttendenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AttendanceLog
+        fields = '__all__'
+        read_only_fields = ['tenant','created_at','updated_at']

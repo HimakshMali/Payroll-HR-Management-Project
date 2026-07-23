@@ -282,6 +282,22 @@ const EmployeeFinance = () => {
                 </div>
 
                 <div className="header-right-stats">
+                    <Link to={`/employees/${id}/payroll`} className="btn-action-payroll" style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.65rem 1.2rem',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(135deg, #1E5E27 0%, #72B01D 100%)',
+                        color: '#FFFFFF',
+                        fontWeight: '700',
+                        textDecoration: 'none',
+                        fontSize: '0.85rem',
+                        border: '1px solid #E2F516',
+                        boxShadow: '0 4px 12px rgba(114, 176, 29, 0.3)'
+                    }}>
+                        💳 Monthly Payroll Manager
+                    </Link>
                     <div className="stat-capsule">
                         <span className="lbl">Net Take-Home</span>
                         <span className="val highlight-green">

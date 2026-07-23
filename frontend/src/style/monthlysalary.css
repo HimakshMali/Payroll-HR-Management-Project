@@ -1,0 +1,277 @@
+/* monthlysalary.css - Light Corporate Glassmorphic Theme */
+
+:root {
+  --ms-bg: #F0F4F8;
+  --ms-card-bg: #FFFFFF;
+  --ms-card-border: #E2E8F0;
+  --ms-card-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  
+  --ms-text-main: #0F172A;
+  --ms-text-muted: #475569;
+  --ms-text-subtle: #64748B;
+  
+  --ms-primary-emerald: #00A86B;
+  --ms-emerald-hover: #008F5B;
+  --ms-emerald-dark: #059669;
+}
+
+.monthly-salary-container {
+  padding: 2.2rem 2.5rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  color: var(--ms-text-main);
+  min-height: 100vh;
+  background: var(--ms-bg);
+}
+
+.ms-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  background: var(--ms-card-bg);
+  border: 1px solid var(--ms-card-border);
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
+  box-shadow: var(--ms-card-shadow);
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.ms-header-title h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--ms-text-main);
+  margin: 0 0 0.4rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ms-header-title p {
+  color: var(--ms-text-subtle);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.ms-selector-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ms-select-box {
+  background: #F8FAFC;
+  border: 1px solid var(--ms-card-border);
+  color: var(--ms-primary-emerald);
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Status Banner */
+.ms-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--ms-card-bg);
+  border: 1px solid var(--ms-card-border);
+  border-radius: 18px;
+  padding: 1.2rem 1.8rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--ms-card-shadow);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.status-pill-lg {
+  padding: 0.5rem 1.2rem;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-pill-lg.DRAFT { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
+.status-pill-lg.GENERATED { background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+.status-pill-lg.APPROVED { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+.status-pill-lg.PAID { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
+
+.ms-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-print-slip {
+  background: #F8FAFC;
+  color: var(--ms-text-main);
+  border: 1px solid #CBD5E1;
+  padding: 0.65rem 1.4rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-print-slip:hover {
+  background: #E2E8F0;
+  transform: translateY(-2px);
+}
+
+.btn-save-payroll {
+  background: var(--ms-primary-emerald);
+  color: #FFFFFF;
+  border: none;
+  padding: 0.65rem 1.4rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(0, 168, 107, 0.25);
+}
+
+.btn-save-payroll:hover {
+  background: var(--ms-emerald-hover);
+  transform: translateY(-2px);
+}
+
+.btn-mark-paid {
+  background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 0.65rem 1.4rem;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-mark-paid:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45);
+}
+
+.btn-mark-paid:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Sections Grid */
+.ms-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 1.8rem;
+  margin-bottom: 2rem;
+}
+
+.ms-card-section {
+  background: var(--ms-card-bg);
+  border: 1px solid var(--ms-card-border);
+  border-radius: 20px;
+  padding: 1.8rem;
+  box-shadow: var(--ms-card-shadow);
+}
+
+.ms-section-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--ms-text-main);
+  margin: 0 0 1.2rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.ms-inputs-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.ms-field-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ms-field-box label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ms-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ms-input-control {
+  background: #F8FAFC;
+  border: 1px solid var(--ms-card-border);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  color: var(--ms-text-main);
+  font-size: 0.95rem;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.ms-input-control:focus {
+  border-color: var(--ms-primary-emerald);
+  box-shadow: 0 0 8px rgba(0, 168, 107, 0.2);
+}
+
+.ms-input-control.computed {
+  background: #F0FDF4;
+  border-color: #86EFAC;
+  color: #15803D;
+  font-weight: 800;
+}
+
+/* Summary Card */
+.ms-summary-card {
+  background: var(--ms-card-bg);
+  border: 1px solid var(--ms-card-border);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: var(--ms-card-shadow);
+}
+
+.net-pay-box {
+  background: #ECFDF5;
+  border: 2px solid #10B981;
+  padding: 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.net-pay-box span {
+  font-size: 0.85rem;
+  color: #047857;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.net-pay-box h2 {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #065F46;
+  margin: 0.4rem 0 0 0;
+}
