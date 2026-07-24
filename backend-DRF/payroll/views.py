@@ -131,8 +131,15 @@ class MonthlySalaryRecordViewSet(viewsets.ModelViewSet):
             return MonthlySalaryRecord.objects.none()
 
         if profile.role in ['OWNER', 'HR']:
-            return MonthlySalaryRecord.objects.filter(tenant = profile.tenant)
-        return MonthlySalaryRecord.objects.filter(employee=profile,tenant = profile.tenant)
+            queryset = MonthlySalaryRecord.objects.filter(tenant=profile.tenant)
+        else:
+            queryset = MonthlySalaryRecord.objects.filter(employee=profile, tenant=profile.tenant)
+
+        employee_param = self.request.query_params.get('employee')
+        if employee_param:
+            queryset = queryset.filter(employee_id=employee_param)
+
+        return queryset
 
 
     def perform_create(self,serializer):
@@ -172,3 +179,169 @@ class MonthlySalaryRecordViewSet(viewsets.ModelViewSet):
             ).update(status='DEDUCTED')
 
         return Response({'message': 'Payroll successfully processed and marked as PAID.'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='pdf-stream')
+    def pdf_stream(self, request, pk=None):
+        """
+        Custom action: GET /api/payroll/salary-records/{id}/pdf-stream/
+        Renders HTML template into an in-memory PDF buffer using WeasyPrint (or xhtml2pdf fallback)
+        and streams it back inline.
+        """
+        import base64
+        import calendar
+        import os
+        from io import BytesIO
+        from decimal import Decimal
+        from django.conf import settings
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+
+        salary_record = self.get_object()
+        employee = salary_record.employee
+        tenant = salary_record.tenant
+
+        # Load company logo from backend-DRF/assets/logo.png
+        logo_base64 = ""
+        logo_path = os.path.join(settings.BASE_DIR, 'assets', 'logo.png')
+        if os.path.exists(logo_path):
+            with open(logo_path, 'rb') as logo_file:
+                logo_base64 = base64.b64encode(logo_file.read()).decode('utf-8')
+
+        month_name = dict(MonthlySalaryRecord.MONTH_CHOICES).get(salary_record.month, f"Month {salary_record.month}")
+
+        # Fetch attendance logs for this employee & pay cycle
+        attendance_logs = AttendanceLog.objects.filter(
+            tenant=tenant,
+            employee=employee,
+            date__month=salary_record.month,
+            date__year=salary_record.year
+        )
+        
+        # Build attendance lookup map: { day_number: log }
+        att_map = {}
+        for log in attendance_logs:
+            if log.date:
+                att_map[log.date.day] = log
+
+        year_val = salary_record.year or 2026
+        month_val = salary_record.month or 1
+        first_weekday, num_days = calendar.monthrange(year_val, month_val)
+        
+        grid_items = []
+        counts = {'Present': 0, 'LOP': 0, 'Absent': 0, 'Holiday': 0, 'Leave': 0}
+        
+        for _ in range(first_weekday):
+            grid_items.append({'day': '', 'code': 'EMPTY', 'is_empty': True})
+
+        for d in range(1, num_days + 1):
+            log = att_map.get(d)
+            if log:
+                status_str = log.status
+                if log.is_lop:
+                    code = 'LOP'
+                    counts['LOP'] += 1
+                elif status_str in ('Present', 'Late'):
+                    code = 'P'
+                    counts['Present'] += 1
+                elif status_str == 'Absent':
+                    code = 'A'
+                    counts['Absent'] += 1
+                elif status_str == 'Holiday':
+                    code = 'H'
+                    counts['Holiday'] += 1
+                elif status_str == 'Leave':
+                    code = 'L'
+                    counts['Leave'] += 1
+                else:
+                    code = 'P'
+                    counts['Present'] += 1
+            else:
+                code = 'P'
+                counts['Present'] += 1
+
+            grid_items.append({'day': d, 'code': code, 'is_empty': False})
+
+        while len(grid_items) % 7 != 0:
+            grid_items.append({'day': '', 'code': 'EMPTY', 'is_empty': True})
+
+        calendar_weeks = [grid_items[i:i + 7] for i in range(0, len(grid_items), 7)]
+        calendar_grid = [item for item in grid_items if not item['is_empty']]
+
+        # Format currency helper function
+        def fmt(val):
+            if val is None:
+                return "0.00"
+            try:
+                return f"{Decimal(str(val)):,.2f}"
+            except Exception:
+                return f"{val}"
+
+        formatted_record = {
+            'basic_salary': fmt(salary_record.basic_salary),
+            'house_rent_allowence': fmt(salary_record.house_rent_allowence),
+            'conveyance_allowence': fmt(salary_record.conveyance_allowence),
+            'phone_allowence': fmt(salary_record.phone_allowence),
+            'medical_allowence': fmt(salary_record.medical_allowence),
+            'special_allowence': fmt(salary_record.special_allowence),
+            'approved_reimbursements': fmt(salary_record.approved_reimbursements),
+            'gross_salary': fmt(salary_record.gross_salary),
+
+            'deductions_EPF': fmt(salary_record.deductions_EPF),
+            'deductions_ESI': fmt(salary_record.deductions_ESI),
+            'deductions_TDS': fmt(salary_record.deductions_TDS),
+            'deductions_professional_tax': fmt(salary_record.deductions_professional_tax),
+            'deductions_other': fmt(salary_record.deductions_other),
+            'lop_days': salary_record.lop_days or counts['LOP'],
+            'lop_deductions': fmt(salary_record.lop_deductions),
+            'advances_deducted': fmt(salary_record.advances_deducted),
+            'total_deductions': fmt(salary_record.total_deductions),
+
+            'net_salary': fmt(salary_record.net_salary),
+            'employer_epf': fmt(salary_record.employer_epf),
+            'employer_esi': fmt(salary_record.employer_esi),
+            'cost_to_company': fmt(salary_record.cost_to_company),
+
+            'status': salary_record.status,
+            'payment_type': salary_record.payment_type or 'BANK_TRANSFER',
+            'payment_date': salary_record.payment_date or 'N/A',
+            'year': salary_record.year,
+            'month': salary_record.month,
+        }
+
+        context = {
+            'record': salary_record,
+            'fmt_rec': formatted_record,
+            'employee': employee,
+            'tenant': tenant,
+            'logo_base64': logo_base64,
+            'month_name': month_name,
+            'calendar_weeks': calendar_weeks,
+            'calendar_grid': calendar_grid,
+            'att_counts': counts,
+        }
+
+        template_name = 'payslip_minimal_corporate.html'
+        html_string = render_to_string(template_name, context)
+
+        pdf_buffer = None
+
+        # 1. Try WeasyPrint first
+        try:
+            import weasyprint
+            pdf_buffer = weasyprint.HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+        except Exception:
+            # 2. Fallback to xhtml2pdf (works natively on Windows without C-library dependencies)
+            from xhtml2pdf import pisa
+            result_stream = BytesIO()
+            pisa_status = pisa.pisaDocument(BytesIO(html_string.encode('utf-8')), result_stream)
+            if not pisa_status.err:
+                pdf_buffer = result_stream.getvalue()
+            else:
+                return HttpResponse("HTML to PDF rendering failed.", status=500)
+
+        emp_email = employee.user.email.split('@')[0] if employee.user and employee.user.email else 'employee'
+        filename = f"Payslip_{emp_email}_{salary_record.month}_{salary_record.year}.pdf"
+
+        response = HttpResponse(pdf_buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response

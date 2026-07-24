@@ -98,6 +98,7 @@ class EmployeeProfile(RLSModel):
     ROLE_CHOICES = [
         ('OWNER', 'Owner / HR Administrator'),
         ('EMPLOYEE', 'Standard Employee'),
+        
     ]
     EMPLOYMENT_TYPE_CHOICES = [
         ('Full-time', 'Full-time'),

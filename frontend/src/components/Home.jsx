@@ -119,20 +119,24 @@ const Home = () => {
     return (
         <div className="glass-dashboard">
             <header className="dashboard-header">
-                <div className="header-title">
-                    <span className="logo-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                <div className="header-top-tag">
+                    <span className="landing-pill-tag">
+                        <span className="tag-dot"></span> AI AGENT CONTROL ROOM
                     </span>
-                    <h1>Agent Control Center</h1>
                 </div>
-                <p className="subtitle">Your AI control room - monitoring employees, payroll, and actions</p>
+                <div className="header-title">
+                    <h1>
+                        HR & Payroll on <span className="volt-highlight">AI Agent.</span> Automated.
+                    </h1>
+                </div>
+                <p className="subtitle">Natural language HR & payroll execution engine. Monitoring employees, financial claims, and automated workflows.</p>
             </header>
 
             <div className="metrics-grid">
-                <div className="metric-card glass-agentic-card">
+                <div className="metric-card landing-stat-card">
                     <div className="metric-top">
                         <span className="metric-label">Total Employees</span>
-                        <span className="more-icon">...</span>
+                        <span className="more-icon">• • •</span>
                     </div>
                     <div className="metric-value">
                         {loading ? '...' : stats.totalEmployees}
@@ -140,20 +144,20 @@ const Home = () => {
                     </div>
                     <p className="metric-context">Registered in organization</p>
                 </div>
-                <div className="metric-card glass-agentic-card">
+                <div className="metric-card landing-stat-card">
                     <div className="metric-top">
                         <span className="metric-label">Monthly Payroll Spend</span>
-                        <span className="more-icon">...</span>
+                        <span className="more-icon">• • •</span>
                     </div>
                     <div className="metric-value">
                         {loading ? '...' : `₹${stats.totalPayroll.toLocaleString('en-IN')}`}
                     </div>
                     <p className="metric-context">Total active salary commitments</p>
                 </div>
-                <div className="metric-card glass-agentic-card">
+                <div className="metric-card landing-stat-card">
                     <div className="metric-top">
                         <span className="metric-label">Average Compensation</span>
-                        <span className="more-icon">...</span>
+                        <span className="more-icon">• • •</span>
                     </div>
                     <div className="metric-value">
                         {loading ? '...' : `₹${stats.averageSalary.toLocaleString('en-IN')}`}
@@ -163,10 +167,13 @@ const Home = () => {
             </div>
 
             <section className="activity-section">
-                <h3 className="section-heading">Recent Agent Activity</h3>
-                <div className="activity-card glass-agentic-card">
+                <div className="section-header-tag">
+                    <span className="landing-pill-tag"><span className="tag-dot"></span> LIVE DISPATCH</span>
+                    <h3 className="section-heading">Recent Agent Activity</h3>
+                </div>
+                <div className="activity-card dark-forest-card">
                     <div className="activity-content">
-                        <span className="agent-badge">
+                        <span className="agent-badge volt-badge">
                             <span className="dot"></span> WhatsApp Agent
                         </span>
                         <p className="activity-text">
@@ -174,8 +181,8 @@ const Home = () => {
                         </p>
                     </div>
                     <div className="activity-actions">
-                        <button className="btn-modern primary agentic-btn">View Details</button>
-                        <button className="btn-modern secondary">Reject</button>
+                        <button className="btn-volt">View Details</button>
+                        <button className="btn-forest-outline">Reject</button>
                     </div>
                 </div>
             </section>
@@ -225,15 +232,15 @@ const Home = () => {
                                 <div className="confirmation-actions">
                                     <button 
                                         type="button" 
-                                        className="btn-modern primary agentic-btn"
+                                        className="btn-volt"
                                         onClick={handleConfirm}
                                         disabled={searchloading}
                                     >
-                                        Approve
+                                        Approve Action
                                     </button>
                                     <button 
                                         type="button" 
-                                        className="btn-modern secondary"
+                                        className="btn-forest-outline"
                                         onClick={handleCancel}
                                         disabled={searchloading}
                                     >
@@ -249,8 +256,8 @@ const Home = () => {
                     {/* Glow blobs – behind the bar */}
                     <div className="glow-blob glow-left"></div>
                     <div className="glow-blob glow-right"></div>
-                    <form onSubmit={handleSubmit} className="google-search-bar">
-                        <span className="search-icon">🔍</span>
+                    <form onSubmit={handleSubmit} className="google-search-bar landing-search-bar">
+                        <span className="search-icon">⚡</span>
                         <input 
                             type="text" 
                             placeholder="Enter command (e.g. Reimburse 1500 to Ravi for travel)" 
@@ -259,14 +266,14 @@ const Home = () => {
                             onChange={(e) => setPrompt(e.target.value)}
                             disabled={searchloading}
                         />
-                        <button type="submit" className="ask-ai-btn" disabled={searchloading}>
-                             {searchloading ? 'Processing...' : 'Ask AI'}
+                        <button type="submit" className="ask-ai-btn volt-btn" disabled={searchloading}>
+                             {searchloading ? 'Processing...' : 'Ask AI Agent'}
                         </button>
                     </form>
                 </div>
 
                 <div className="example-prompts">
-                    <span className="prompts-label">Try asking:</span>
+                    <span className="prompts-label">Try natural commands:</span>
                     <button type="button" className="prompt-pill" onClick={() => setPrompt("Give 10000 advance to Ravi for personal emergency")} disabled={searchloading}>
                         "Give 10,000 advance to Ravi"
                     </button>

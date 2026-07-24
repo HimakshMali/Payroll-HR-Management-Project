@@ -70,8 +70,9 @@ const EmployeeFinance = () => {
     // Speed Dial FAB state
     const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false);
 
-    // Drawer state: null, 'advance', or 'reimbursement'
+    // Drawer & editing state: null, 'advance', or 'reimbursement'
     const [drawerType, setDrawerType] = useState(null);
+    const [editingItem, setEditingItem] = useState(null); // { type: 'advance'|'reimbursement', id: number }
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formErrors, setFormErrors] = useState({});
 
@@ -92,8 +93,6 @@ const EmployeeFinance = () => {
         is_processed_in_salary: false,
         payment_date: ''
     });
-
-    // Check manager status (Owner or HR) - defined above
 
     const fetchData = async () => {
         try {
@@ -137,6 +136,7 @@ const EmployeeFinance = () => {
             alert("Unauthorized action.");
             return;
         }
+        setEditingItem(null);
         setDrawerType(type);
         setIsSpeedDialOpen(false);
         setFormErrors({});
@@ -159,9 +159,68 @@ const EmployeeFinance = () => {
         });
     };
 
+    const handleEditOpen = (type, item) => {
+        if (!isManager) {
+            alert("Only managers can configure records.");
+            return;
+        }
+        setEditingItem({ type, id: item.id });
+        setFormErrors({});
+        if (type === 'advance') {
+            setAdvanceForm({
+                amount: item.amount || '',
+                reason: item.reason || '',
+                status: item.status || 'PENDING',
+                disbursement_date: item.disbursement_date || '',
+                recovery_month: item.recovery_month || ''
+            });
+            setDrawerType('advance');
+        } else if (type === 'reimbursement') {
+            setReimbursementForm({
+                category: item.category || 'OTHER',
+                amount: item.amount || '',
+                reason: item.reason || '',
+                status: item.status || 'PENDING',
+                is_processed_in_salary: Boolean(item.is_processed_in_salary),
+                payment_date: item.payment_date || ''
+            });
+            setDrawerType('reimbursement');
+        }
+    };
+
     const handleCloseDrawer = () => {
         setDrawerType(null);
+        setEditingItem(null);
         setFormErrors({});
+    };
+
+    const handleQuickStatusUpdate = async (type, itemId, newStatus) => {
+        if (!isManager) return;
+        try {
+            const endpoint = type === 'advance' 
+                ? `../payroll/advances/${itemId}/` 
+                : `../payroll/reimbursements/${itemId}/`;
+            await axiosInstance.patch(endpoint, { status: newStatus });
+            fetchData();
+        } catch (err) {
+            console.error(`Error updating ${type} status:`, err);
+            alert(err.response?.data?.detail || err.response?.data?.error || `Failed to update ${type} status.`);
+        }
+    };
+
+    const handleDeleteItem = async (type, itemId) => {
+        if (!isManager) return;
+        if (!window.confirm(`Are you sure you want to delete this ${type} record?`)) return;
+        try {
+            const endpoint = type === 'advance' 
+                ? `../payroll/advances/${itemId}/` 
+                : `../payroll/reimbursements/${itemId}/`;
+            await axiosInstance.delete(endpoint);
+            fetchData();
+        } catch (err) {
+            console.error(`Error deleting ${type}:`, err);
+            alert(err.response?.data?.detail || `Failed to delete ${type}.`);
+        }
     };
 
     const handleAdvanceSubmit = async (e) => {
@@ -173,7 +232,6 @@ const EmployeeFinance = () => {
         setIsSubmitting(true);
         setFormErrors({});
 
-        // Prepare payload (convert empty dates/values appropriately)
         const payload = {
             employee: parseInt(id),
             amount: parseFloat(advanceForm.amount),
@@ -184,12 +242,16 @@ const EmployeeFinance = () => {
         };
 
         try {
-            await axiosInstance.post('../payroll/advances/', payload);
+            if (editingItem && editingItem.type === 'advance') {
+                await axiosInstance.patch(`../payroll/advances/${editingItem.id}/`, payload);
+            } else {
+                await axiosInstance.post('../payroll/advances/', payload);
+            }
             handleCloseDrawer();
             fetchData();
         } catch (err) {
             console.error(err);
-            setFormErrors(err.response?.data || { detail: 'An error occurred while creating the advance request.' });
+            setFormErrors(err.response?.data || { detail: 'An error occurred while saving the advance request.' });
         } finally {
             setIsSubmitting(false);
         }
@@ -211,7 +273,11 @@ const EmployeeFinance = () => {
         };
 
         try {
-            await axiosInstance.post('../payroll/reimbursements/', payload);
+            if (editingItem && editingItem.type === 'reimbursement') {
+                await axiosInstance.patch(`../payroll/reimbursements/${editingItem.id}/`, payload);
+            } else {
+                await axiosInstance.post('../payroll/reimbursements/', payload);
+            }
             handleCloseDrawer();
             fetchData();
         } catch (err) {
@@ -272,6 +338,9 @@ const EmployeeFinance = () => {
                         <img src={avatarUrl} alt="Employee Avatar" />
                     </div>
                     <div className="header-emp-info">
+                        <div style={{ marginBottom: '4px' }}>
+                            <span className="landing-pill-tag"><span className="tag-dot"></span> FINANCIAL DIRECTORY</span>
+                        </div>
                         <h2>{employee ? `${employee.first_name || ''} ${employee.last_name || ''}` : 'Employee Finance'}</h2>
                         <div className="info-meta">
                             <span>{employee?.user?.email}</span>
@@ -282,31 +351,18 @@ const EmployeeFinance = () => {
                 </div>
 
                 <div className="header-right-stats">
-                    <Link to={`/employees/${id}/payroll`} className="btn-action-payroll" style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.65rem 1.2rem',
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, #1E5E27 0%, #72B01D 100%)',
-                        color: '#FFFFFF',
-                        fontWeight: '700',
-                        textDecoration: 'none',
-                        fontSize: '0.85rem',
-                        border: '1px solid #E2F516',
-                        boxShadow: '0 4px 12px rgba(114, 176, 29, 0.3)'
-                    }}>
-                        💳 Monthly Payroll Manager
+                    <Link to={`/employees/${id}/payroll`} className="btn-action-payroll">
+                        ⚡ Monthly Payroll Manager
                     </Link>
-                    <div className="stat-capsule">
+                    <div className="stat-capsule landing-stat">
                         <span className="lbl">Net Take-Home</span>
                         <span className="val highlight-green">
                             {salaryDetails?.net_salary ? `₹${Number(salaryDetails.net_salary).toLocaleString('en-IN')}` : '₹0.00'}
                         </span>
                     </div>
-                    <div className="stat-capsule">
+                    <div className="stat-capsule landing-stat">
                         <span className="lbl">Cost To Company</span>
-                        <span className="val highlight-indigo">
+                        <span className="val highlight-forest">
                             {salaryDetails?.cost_to_company ? `₹${Number(salaryDetails.cost_to_company).toLocaleString('en-IN')}` : '₹0.00'}
                         </span>
                     </div>
@@ -473,6 +529,43 @@ const EmployeeFinance = () => {
                                                     <span className="val">{new Date(item.created_at).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
+
+                                            {isManager && (
+                                                <div className="record-actions-bar">
+                                                    {item.status === 'PENDING' && (
+                                                        <>
+                                                            <button 
+                                                                className="btn-action-sm btn-approve"
+                                                                onClick={() => handleQuickStatusUpdate('advance', item.id, 'APPROVED')}
+                                                                title="Approve Advance"
+                                                            >
+                                                                ✓ Approve
+                                                            </button>
+                                                            <button 
+                                                                className="btn-action-sm btn-reject"
+                                                                onClick={() => handleQuickStatusUpdate('advance', item.id, 'REJECTED')}
+                                                                title="Reject Advance"
+                                                            >
+                                                                ✕ Reject
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    <button 
+                                                        className="btn-action-sm btn-config"
+                                                        onClick={() => handleEditOpen('advance', item)}
+                                                        title="Configure / Edit"
+                                                    >
+                                                        ⚙ Configure
+                                                    </button>
+                                                    <button 
+                                                        className="btn-action-sm btn-delete"
+                                                        onClick={() => handleDeleteItem('advance', item.id)}
+                                                        title="Delete Record"
+                                                    >
+                                                        🗑
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -536,6 +629,43 @@ const EmployeeFinance = () => {
                                                     <span className="val">{new Date(item.created_at).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
+
+                                            {isManager && (
+                                                <div className="record-actions-bar">
+                                                    {item.status === 'PENDING' && (
+                                                        <>
+                                                            <button 
+                                                                className="btn-action-sm btn-approve"
+                                                                onClick={() => handleQuickStatusUpdate('reimbursement', item.id, 'APPROVED')}
+                                                                title="Approve Claim"
+                                                            >
+                                                                ✓ Approve
+                                                            </button>
+                                                            <button 
+                                                                className="btn-action-sm btn-reject"
+                                                                onClick={() => handleQuickStatusUpdate('reimbursement', item.id, 'REJECTED')}
+                                                                title="Reject Claim"
+                                                            >
+                                                                ✕ Reject
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    <button 
+                                                        className="btn-action-sm btn-config"
+                                                        onClick={() => handleEditOpen('reimbursement', item)}
+                                                        title="Configure / Edit"
+                                                    >
+                                                        ⚙ Configure
+                                                    </button>
+                                                    <button 
+                                                        className="btn-action-sm btn-delete"
+                                                        onClick={() => handleDeleteItem('reimbursement', item.id)}
+                                                        title="Delete Claim"
+                                                    >
+                                                        🗑
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

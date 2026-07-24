@@ -116,7 +116,9 @@ const MonthlySalary = () => {
             const allRecords = recordsRes.data || [];
             
             const matching = allRecords.find(
-                r => String(r.month) === String(selectedMonth) && String(r.year) === String(selectedYear)
+                r => (String(r.employee) === String(selectedEmployeeId) || String(r.employee?.id) === String(selectedEmployeeId)) &&
+                     String(r.month) === String(selectedMonth) && 
+                     String(r.year) === String(selectedYear)
             );
 
             // Fetch linked reimbursements & advances
@@ -376,8 +378,11 @@ const MonthlySalary = () => {
         }
     };
 
+    const isPrintDisabled = !recordId || formData.status !== 'PAID';
+
     const handlePrintPaySlip = () => {
-        window.print();
+        if (isPrintDisabled) return;
+        navigate(`/payroll/print/${recordId}`);
     };
 
     const targetEmployee = employees.find(e => String(e.id) === String(selectedEmployeeId));
@@ -387,12 +392,13 @@ const MonthlySalary = () => {
             {/* Header */}
             <div className="ms-header">
                 <div className="ms-header-title">
+                    <div style={{ marginBottom: '6px' }}>
+                        <span className="landing-pill-tag">
+                            <span className="tag-dot"></span> PAYROLL ENGINE
+                        </span>
+                    </div>
                     <h1>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00A86B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="1" x2="12" y2="23"></line>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                        </svg>
-                        Monthly Payroll Manager
+                        Monthly Payroll <span className="volt-highlight">Manager.</span>
                     </h1>
                     <p>View, edit, compute, and disburse monthly employee salary statements</p>
                 </div>
@@ -468,6 +474,8 @@ const MonthlySalary = () => {
                     <button 
                         className="btn-print-slip"
                         onClick={handlePrintPaySlip}
+                        disabled={isPrintDisabled}
+                        title={isPrintDisabled ? "Payroll status must be marked as PAID to enable payslip printing" : "View & print payslip preview"}
                     >
                         🖨 Print Pay Slip
                     </button>

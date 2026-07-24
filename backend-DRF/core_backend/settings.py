@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'payroll',
     'whatsapp',
     'ai_agent',
+    'contractors',
 
 
 

@@ -33,6 +33,7 @@ import EmployeeFinance from './components/EmployeeFinance';
 import AttendancePage from './components/AttendancePage';
 import EmployeeAttendance from './components/EmployeeAttendance';
 import MonthlySalary from './components/MonthlySalary';
+import PayslipPreview from './components/PayslipPreview';
 import './style/layout.css';
 
 function App() {
@@ -76,6 +77,7 @@ function App() {
                                 <Route path="/attendance" element={<AttendancePage />} />
                                 <Route path="/employees/:id/attendance" element={<EmployeeAttendance />} />
                                 <Route path="/payroll" element={<MonthlySalary />} />
+                                <Route path="/payroll/print/:salaryRecordId" element={<PayslipPreview />} />
                                 <Route path="/employees/:id/payroll" element={<MonthlySalary />} />
                                 <Route path="/org" element={<OrganizationProfile />} />
                                 <Route path="/add-employee" element={<AddEmployee />} />
@@ -88,6 +90,7 @@ function App() {
                                 <Route path="/attendance" element={<AttendancePage />} />
                                 <Route path="/employees/:id/attendance" element={<EmployeeAttendance />} />
                                 <Route path="/payroll" element={<MonthlySalary />} />
+                                <Route path="/payroll/print/:salaryRecordId" element={<PayslipPreview />} />
                                 <Route path="/employees/:id/payroll" element={<MonthlySalary />} />
                                 <Route path="*" element={<Navigate to="/profile" replace />} />
                             </>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip - {{ employee.user.email }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 10mm 12mm 10mm 12mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 8.5pt;
+            color: #1E293B;
+            background-color: #FFFFFF;
+            line-height: 1.4;
+        }
+
+        /* ===== HEADER ===== */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+        }
+
+        .company-name {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #0F172A;
+            letter-spacing: 0.5px;
+        }
+
+        .company-sub {
+            font-size: 7.5pt;
+            color: #64748B;
+            margin-top: 2px;
+        }
+
+        .badge-payslip {
+            background-color: #0F172A;
+            color: #10B981;
+            font-size: 8.5pt;
+            font-weight: bold;
+            padding: 4px 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+
+        .header-period {
+            font-size: 8.5pt;
+            color: #475569;
+            margin-top: 4px;
+        }
+
+        .header-divider {
+            border-top: 2px solid #0F172A;
+            margin-bottom: 12px;
+        }
+
+        /* ===== EMPLOYEE DETAILS CARD ===== */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            margin-bottom: 14px;
+        }
+
+        .info-table td {
+            padding: 6px 10px;
+            font-size: 8pt;
+            border-bottom: 1px solid #EDF2F7;
+        }
+
+        .info-label {
+            color: #64748B;
+            font-weight: bold;
+            font-size: 7pt;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .info-value {
+            color: #0F172A;
+            font-weight: bold;
+        }
+
+        .status-paid {
+            color: #16A34A;
+            font-weight: bold;
+        }
+
+        /* ===== ATTENDANCE CALENDAR ===== */
+        .section-header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+
+        .section-title {
+            font-size: 8.5pt;
+            font-weight: bold;
+            color: #0F172A;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cal-legend-text {
+            font-size: 7.5pt;
+            font-weight: bold;
+            color: #475569;
+            text-align: right;
+        }
+
+        .cal-container-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #CBD5E1;
+            margin-bottom: 14px;
+        }
+
+        .cal-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .cal-table th {
+            background-color: #F1F5F9;
+            color: #475569;
+            font-size: 7pt;
+            font-weight: bold;
+            text-align: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #CBD5E1;
+            border-right: 1px solid #CBD5E1;
+            text-transform: uppercase;
+        }
+
+        .cal-table th:last-child {
+            border-right: none;
+        }
+
+        .cal-cell {
+            text-align: center;
+            vertical-align: middle;
+            padding: 3px 2px;
+            height: 32px;
+            border-bottom: 1px solid #E2E8F0;
+            border-right: 1px solid #E2E8F0;
+            background-color: #FFFFFF;
+        }
+
+        .cal-cell:last-child {
+            border-right: none;
+        }
+
+        .cal-cell.cell-empty {
+            background-color: #FAFAFA;
+        }
+
+        .day-num {
+            font-size: 7.5pt;
+            font-weight: bold;
+            color: #1E293B;
+            line-height: 1;
+        }
+
+        .badge-code {
+            font-size: 6pt;
+            font-weight: bold;
+            padding: 1px 4px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        .badge-P { background-color: #DCFCE7; color: #15803D; }
+        .badge-LOP { background-color: #FEE2E2; color: #B91C1C; }
+        .badge-A { background-color: #FFEDD5; color: #C2410C; }
+        .badge-H { background-color: #F1F5F9; color: #475569; }
+        .badge-L { background-color: #DBEAFE; color: #1E40AF; }
+
+        .cell-P { background-color: #F4FBF7; }
+        .cell-LOP { background-color: #FEF2F2; }
+        .cell-A { background-color: #FFF7ED; }
+        .cell-H { background-color: #F8FAFC; }
+        .cell-L { background-color: #F0F7FF; }
+
+        /* ===== FINANCIAL TABLES ===== */
+        .fin-wrapper-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+        }
+
+        .fin-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #CBD5E1;
+        }
+
+        .fin-table th {
+            background-color: #0F172A;
+            color: #FFFFFF;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 6px 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .fin-table td {
+            padding: 5px 10px;
+            font-size: 8pt;
+            border-bottom: 1px solid #E2E8F0;
+            color: #334155;
+        }
+
+        .fin-table tr.subtotal-row td {
+            background-color: #F1F5F9;
+            font-weight: bold;
+            color: #0F172A;
+            font-size: 8.5pt;
+            border-top: 1.5px solid #CBD5E1;
+            border-bottom: none;
+        }
+
+        .val-positive { color: #16A34A; font-weight: bold; }
+        .val-negative { color: #DC2626; font-weight: bold; }
+
+        /* ===== NET TAKE-HOME BANNER ===== */
+        .net-card-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #0F172A;
+            margin-bottom: 14px;
+        }
+
+        .net-card-table td {
+            padding: 10px 16px;
+            vertical-align: middle;
+        }
+
+        .net-title {
+            color: #10B981;
+            font-size: 9.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .net-sub {
+            color: #94A3B8;
+            font-size: 7.5pt;
+            margin-top: 2px;
+        }
+
+        .net-amount {
+            color: #10B981;
+            font-size: 18pt;
+            font-weight: bold;
+        }
+
+        /* ===== EMPLOYER CONTRIBUTIONS ===== */
+        .employer-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            margin-bottom: 14px;
+        }
+
+        .employer-table td {
+            padding: 7px 12px;
+            font-size: 8pt;
+            color: #475569;
+        }
+
+        .employer-label {
+            color: #64748B;
+            font-size: 7.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .employer-val {
+            color: #0F172A;
+            font-weight: bold;
+            font-size: 8.5pt;
+        }
+
+        .employer-val.ctc {
+            font-size: 9.5pt;
+            color: #0F172A;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-top: 1px solid #E2E8F0;
+            margin-top: 4px;
+        }
+
+        .footer-table td {
+            padding-top: 8px;
+            text-align: center;
+            font-size: 7pt;
+            color: #94A3B8;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <table class="header-table">
+        <tr>
+            <td width="60%" valign="middle">
+                {% if logo_base64 %}
+                    <img src="data:image/png;base64,{{ logo_base64 }}" height="38" style="height: 38px; max-height: 38px; width: auto;" alt="Logo" />
+                {% else %}
+                    <div class="company-name">{{ tenant.name|default:"SALZ" }}</div>
+                    <div class="company-sub">{{ tenant.name|default:"SALZ ENTERPRISE" }} • Monthly Payroll Statement</div>
+                {% endif %}
+            </td>
+            <td width="40%" align="right" valign="middle">
+                <div class="badge-payslip">OFFICIAL PAYSLIP</div>
+                <div class="header-period">
+                    Pay Period: <strong>{{ month_name }} {{ fmt_rec.year }}</strong>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="header-divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- EMPLOYEE & PAYSLIP DETAILS -->
+    <!-- ============================================================ -->
+    <table class="info-table">
+        <tr>
+            <td width="18%" class="info-label">Employee Name</td>
+            <td width="32%" class="info-value">{{ employee.first_name }} {{ employee.last_name }}</td>
+            <td width="18%" class="info-label">Pay Period</td>
+            <td width="34%" class="info-value">{{ month_name }} {{ fmt_rec.year }}</td>
+        </tr>
+        <tr>
+            <td class="info-label">Email Address</td>
+            <td class="info-value">{{ employee.user.email }}</td>
+            <td class="info-label">Payment Status</td>
+            <td class="info-value status-paid">{{ fmt_rec.status }}</td>
+        </tr>
+        <tr>
+            <td class="info-label">Role / Position</td>
+            <td class="info-value">{{ employee.role }}</td>
+            <td class="info-label">Payment Mode</td>
+            <td class="info-value">{{ fmt_rec.payment_type }}</td>
+        </tr>
+        <tr>
+            <td class="info-label">Employment Type</td>
+            <td class="info-value">{{ employee.employment_type|default:"Full-time" }}</td>
+            <td class="info-label">Disbursement Date</td>
+            <td class="info-value">{{ fmt_rec.payment_date }}</td>
+        </tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- ATTENDANCE LOG CALENDAR -->
+    <!-- ============================================================ -->
+    <table class="section-header-table">
+        <tr>
+            <td class="section-title">Attendance Log — {{ month_name }} {{ fmt_rec.year }}</td>
+            <td class="cal-legend-text">
+                P: {{ att_counts.Present }} &nbsp;|&nbsp;
+                LOP: {{ att_counts.LOP }} &nbsp;|&nbsp;
+                A: {{ att_counts.Absent }} &nbsp;|&nbsp;
+                H: {{ att_counts.Holiday }}
+            </td>
+        </tr>
+    </table>
+
+    <div class="cal-container-table">
+        <table class="cal-table">
+            <thead>
+                <tr>
+                    <th width="14.28%">MON</th>
+                    <th width="14.28%">TUE</th>
+                    <th width="14.28%">WED</th>
+                    <th width="14.28%">THU</th>
+                    <th width="14.28%">FRI</th>
+                    <th width="14.28%">SAT</th>
+                    <th width="14.28%">SUN</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in calendar_weeks %}
+                    <tr>
+                        {% for item in week %}
+                            {% if item.is_empty %}
+                                <td class="cal-cell cell-empty">&nbsp;</td>
+                            {% else %}
+                                <td class="cal-cell cell-{{ item.code }}">
+                                    <div class="day-num">{{ item.day }}</div>
+                                    <span class="badge-code badge-{{ item.code }}">{{ item.code }}</span>
+                                </td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- EARNINGS & DEDUCTIONS COMPARISON -->
+    <!-- ============================================================ -->
+    <table class="fin-wrapper-table">
+        <tr>
+            <!-- EARNINGS -->
+            <td width="49%" valign="top">
+                <table class="fin-table">
+                    <thead>
+                        <tr>
+                            <th align="left">Earnings &amp; Allowances</th>
+                            <th align="right">Amount (Rs.)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Basic Salary</td>
+                            <td align="right">{{ fmt_rec.basic_salary }}</td>
+                        </tr>
+                        <tr>
+                            <td>House Rent Allowance (HRA)</td>
+                            <td align="right">{{ fmt_rec.house_rent_allowence }}</td>
+                        </tr>
+                        <tr>
+                            <td>Conveyance Allowance</td>
+                            <td align="right">{{ fmt_rec.conveyance_allowence }}</td>
+                        </tr>
+                        <tr>
+                            <td>Phone Allowance</td>
+                            <td align="right">{{ fmt_rec.phone_allowence }}</td>
+                        </tr>
+                        <tr>
+                            <td>Medical Allowance</td>
+                            <td align="right">{{ fmt_rec.medical_allowence }}</td>
+                        </tr>
+                        <tr>
+                            <td>Special Allowance</td>
+                            <td align="right">{{ fmt_rec.special_allowence }}</td>
+                        </tr>
+                        {% if record.approved_reimbursements > 0 %}
+                            <tr>
+                                <td>Approved Reimbursements</td>
+                                <td align="right" class="val-positive">+ {{ fmt_rec.approved_reimbursements }}</td>
+                            </tr>
+                        {% endif %}
+                        <tr class="subtotal-row">
+                            <td>Gross Salary</td>
+                            <td align="right">{{ fmt_rec.gross_salary }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+
+            <td width="2%"></td>
+
+            <!-- DEDUCTIONS -->
+            <td width="49%" valign="top">
+                <table class="fin-table">
+                    <thead>
+                        <tr>
+                            <th align="left">Deductions &amp; Adjustments</th>
+                            <th align="right">Amount (Rs.)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>EPF (Employee)</td>
+                            <td align="right">{{ fmt_rec.deductions_EPF }}</td>
+                        </tr>
+                        <tr>
+                            <td>ESI (Employee)</td>
+                            <td align="right">{{ fmt_rec.deductions_ESI }}</td>
+                        </tr>
+                        <tr>
+                            <td>TDS (Income Tax)</td>
+                            <td align="right">{{ fmt_rec.deductions_TDS }}</td>
+                        </tr>
+                        <tr>
+                            <td>Professional Tax (PT)</td>
+                            <td align="right">{{ fmt_rec.deductions_professional_tax }}</td>
+                        </tr>
+                        <tr>
+                            <td>Other Deductions</td>
+                            <td align="right">{{ fmt_rec.deductions_other }}</td>
+                        </tr>
+                        <tr>
+                            <td>LOP Deductions ({{ fmt_rec.lop_days }} Days)</td>
+                            <td align="right">{{ fmt_rec.lop_deductions }}</td>
+                        </tr>
+                        {% if record.advances_deducted > 0 %}
+                            <tr>
+                                <td>Salary Advance Recovery</td>
+                                <td align="right" class="val-negative">- {{ fmt_rec.advances_deducted }}</td>
+                            </tr>
+                        {% endif %}
+                        <tr class="subtotal-row">
+                            <td>Total Deductions</td>
+                            <td align="right">{{ fmt_rec.total_deductions }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- NET TAKE-HOME SALARY HIGHLIGHT -->
+    <!-- ============================================================ -->
+    <table class="net-card-table">
+        <tr>
+            <td width="60%">
+                <div class="net-title">Net Take-Home Salary</div>
+                <div class="net-sub">Gross Salary minus Total Deductions</div>
+            </td>
+            <td width="40%" align="right">
+                <div class="net-amount">Rs. {{ fmt_rec.net_salary }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- EMPLOYER CONTRIBUTIONS & CTC -->
+    <!-- ============================================================ -->
+    <table class="employer-table">
+        <tr>
+            <td width="33%">
+                <span class="employer-label">Employer EPF:</span>
+                <span class="employer-val">Rs. {{ fmt_rec.employer_epf }}</span>
+            </td>
+            <td width="33%" align="center">
+                <span class="employer-label">Employer ESI:</span>
+                <span class="employer-val">Rs. {{ fmt_rec.employer_esi }}</span>
+            </td>
+            <td width="34%" align="right">
+                <span class="employer-label">Cost To Company (CTC):</span>
+                <span class="employer-val ctc">Rs. {{ fmt_rec.cost_to_company }}</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- FOOTER -->
+    <!-- ============================================================ -->
+    <table class="footer-table">
+        <tr>
+            <td>
+                This is an official computer-generated payroll statement issued by the SALZ Payroll Engine.<br>
+                Confidential &amp; Proprietary &bull; <strong>{{ tenant.name|default:"Himaksh's Organisation" }}</strong>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>
