@@ -295,3 +295,423 @@
   margin: 0.4rem 0 0 0;
   letter-spacing: -0.5px;
 }
+
+/* ==========================================================================
+   PAYROLL OVERVIEW DASHBOARD STYLES (White + Agentic Emerald Green Theme)
+   ========================================================================== */
+
+/* Top Metrics Grid */
+.po-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.po-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+  border-radius: 20px;
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.po-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -5px rgba(16, 185, 129, 0.14), 0 0 0 1px rgba(16, 185, 129, 0.3);
+  border-color: #10B981;
+}
+
+.po-card-highlight {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F0FDF4 100%);
+  border-color: #A7F3D0;
+}
+
+.po-card-highlight:hover {
+  border-color: #10B981;
+}
+
+.po-card-dark {
+  background: linear-gradient(135deg, #0F172A 0%, #064E3B 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.po-card-dark:hover {
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.25);
+  border-color: #10B981;
+}
+
+.po-card-dark .po-card-title {
+  color: #94A3B8;
+}
+
+.po-card-dark .po-card-value {
+  color: #FFFFFF;
+}
+
+.po-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.po-card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.po-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ECFDF5;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.po-card-dark .po-card-icon {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+.po-card-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+  margin: 0.2rem 0;
+}
+
+.po-card-subtext {
+  font-size: 0.83rem;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.po-card-dark .po-card-subtext {
+  color: #CBD5E1;
+}
+
+.po-badge-green {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Compliance Breakdown Accordion/Grid */
+.po-compliance-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed #E2E8F0;
+}
+
+.po-comp-item {
+  font-size: 0.74rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 3px 10px;
+  border-radius: 6px;
+  color: #334155;
+  font-weight: 600;
+}
+
+.po-comp-item strong {
+  color: #0F172A;
+  margin-left: 2px;
+}
+
+/* Toolbar & Filters */
+.po-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.02);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.po-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+  max-width: 420px;
+}
+
+.po-search-input {
+  width: 100%;
+  padding: 0.65rem 1rem 0.65rem 2.5rem;
+  border-radius: 9999px;
+  border: 1px solid #CBD5E1;
+  background: #F8FAFC;
+  color: #0F172A;
+  font-size: 0.88rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.po-search-input:focus {
+  background: #FFFFFF;
+  border-color: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.po-search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94A3B8;
+  font-size: 0.95rem;
+}
+
+.po-filter-tabs {
+  display: flex;
+  gap: 0.4rem;
+  background: #F1F5F9;
+  padding: 4px;
+  border-radius: 9999px;
+}
+
+.po-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.po-tab-btn.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+/* Employee Table Container */
+.po-table-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.po-table-wrapper {
+  overflow-x: auto;
+}
+
+.po-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.po-table th {
+  background: #F8FAFC;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.po-table td {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid #F1F5F9;
+  color: #0F172A;
+  font-size: 0.9rem;
+  vertical-align: middle;
+  transition: background 0.2s ease;
+}
+
+.po-table tbody tr:hover td {
+  background: #F8FAFC;
+}
+
+.po-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Employee Identity Cell */
+.po-emp-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.po-emp-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+  flex-shrink: 0;
+}
+
+.po-emp-name {
+  font-weight: 700;
+  color: #0F172A;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.po-emp-sub {
+  font-size: 0.78rem;
+  color: #64748B;
+}
+
+.po-net-badge {
+  display: inline-flex;
+  flex-direction: column;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  padding: 0.4rem 0.9rem;
+  border-radius: 12px;
+}
+
+.po-net-amount {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #047857;
+}
+
+.po-net-label {
+  font-size: 0.68rem;
+  color: #059669;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* View More Profile Button */
+.po-btn-view-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #FFFFFF;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+  padding: 0.55rem 1.1rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.83rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);
+}
+
+.po-btn-view-more:hover {
+  background: #10B981;
+  color: #FFFFFF;
+  border-color: #10B981;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
+}
+
+/* Back Button on Detailed View */
+.ms-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 0.5rem;
+}
+
+.ms-back-btn:hover {
+  background: #F8FAFC;
+  border-color: #10B981;
+  color: #0F172A;
+  transform: translateX(-2px);
+}
+
+/* Loading Shimmer Skeleton Animations */
+.po-skeleton-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  padding: 1.5rem;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.po-skeleton-line {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: po-shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes po-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.po-empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #64748B;
+}
+
+.po-empty-state h3 {
+  font-size: 1.1rem;
+  color: #0F172A;
+  margin-bottom: 0.4rem;
+}
+

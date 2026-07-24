@@ -37,9 +37,9 @@ const STATUS_CHOICES = [
 const MonthlySalary = () => {
     const { id: paramEmployeeId } = useParams();
     const navigate = useNavigate();
-    const { userProfile, employeeProfile } = useContext(AuthContext);
+    const { userProfile } = useContext(AuthContext);
 
-    const isManager = userProfile?.role === 'OWNER' || userProfile?.isHr;
+    const isOverviewMode = !paramEmployeeId;
 
     // Filter states
     const [employees, setEmployees] = useState([]);
@@ -47,15 +47,20 @@ const MonthlySalary = () => {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-    // Record data
+    // Overview specific state
+    const [allSalaryRecords, setAllSalaryRecords] = useState([]);
+    const [allSalaryComponents, setAllSalaryComponents] = useState([]);
+    const [loadingOverview, setLoadingOverview] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+
+    // Single Record Detail State
     const [salaryRecord, setSalaryRecord] = useState(null);
     const [recordId, setRecordId] = useState(null);
-
-    // Linked reimbursements & advances
     const [linkedReimbursements, setLinkedReimbursements] = useState([]);
     const [linkedAdvances, setLinkedAdvances] = useState([]);
 
-    // Form editable state
+    // Form editable state (Detail View)
     const [formData, setFormData] = useState({
         basic_salary: '0.00',
         house_rent_allowence: '0.00',
@@ -83,32 +88,53 @@ const MonthlySalary = () => {
         payment_date: ''
     });
 
-    const [loading, setLoading] = useState(true);
+    const [loadingDetail, setLoadingDetail] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isProcessingPaid, setIsProcessingPaid] = useState(false);
     const [message, setMessage] = useState(null);
 
-    // Initial load: Fetch employees list
+    // Synchronize param switch
     useEffect(() => {
-        const fetchEmployeesList = async () => {
+        if (paramEmployeeId) {
+            setSelectedEmployeeId(paramEmployeeId);
+        }
+    }, [paramEmployeeId]);
+
+    // =========================================================================
+    // OVERVIEW DATA FETCHING (When no specific employee ID param in URL)
+    // =========================================================================
+    useEffect(() => {
+        if (!isOverviewMode) return;
+
+        const fetchOverviewData = async () => {
             try {
-                const res = await axiosInstance.get('/employees/');
-                setEmployees(res.data || []);
-                if (!selectedEmployeeId && res.data && res.data.length > 0) {
-                    setSelectedEmployeeId(res.data[0].id);
-                }
+                setLoadingOverview(true);
+                const [empRes, recordsRes, compRes] = await Promise.all([
+                    axiosInstance.get('/employees/'),
+                    axiosInstance.get('../payroll/salary-records/'),
+                    axiosInstance.get('../payroll/salary-components/')
+                ]);
+
+                setEmployees(empRes.data || []);
+                setAllSalaryRecords(recordsRes.data || []);
+                setAllSalaryComponents(compRes.data || []);
             } catch (err) {
-                console.error("Failed to fetch employees list:", err);
+                console.error("Failed to fetch overview payroll data:", err);
+            } finally {
+                setLoadingOverview(false);
             }
         };
-        fetchEmployeesList();
-    }, []);
 
-    // Main fetch data for chosen employee, month, and year
-    const fetchPayrollRecord = async () => {
-        if (!selectedEmployeeId) return;
+        fetchOverviewData();
+    }, [isOverviewMode, selectedMonth, selectedYear]);
+
+    // =========================================================================
+    // SINGLE EMPLOYEE DETAIL DATA FETCHING
+    // =========================================================================
+    const fetchSinglePayrollRecord = async () => {
+        if (!selectedEmployeeId || isOverviewMode) return;
         try {
-            setLoading(true);
+            setLoadingDetail(true);
             setMessage(null);
 
             // Fetch records from backend
@@ -133,12 +159,10 @@ const MonthlySalary = () => {
             setLinkedReimbursements(reimbs);
             setLinkedAdvances(advs);
 
-            // Sum ALL approved reimbursements awaiting salary payout
             const approvedReimbSum = reimbs
                 .filter(r => r.status === 'APPROVED')
                 .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
 
-            // Sum ALL approved advances
             const approvedAdvSum = advs
                 .filter(a => a.status === 'APPROVED')
                 .reduce((sum, a) => sum + parseFloat(a.amount || 0), 0);
@@ -225,17 +249,133 @@ const MonthlySalary = () => {
                 }
             }
         } catch (err) {
-            console.error("Error fetching payroll record:", err);
+            console.error("Error fetching single payroll record:", err);
         } finally {
-            setLoading(false);
+            setLoadingDetail(false);
         }
     };
 
     useEffect(() => {
-        fetchPayrollRecord();
-    }, [selectedEmployeeId, selectedMonth, selectedYear]);
+        if (!isOverviewMode && selectedEmployeeId) {
+            fetchSinglePayrollRecord();
+        }
+    }, [isOverviewMode, selectedEmployeeId, selectedMonth, selectedYear]);
 
-    // Handle input field changes
+    // Format Currency Helper
+    const formatINR = (val) => {
+        const num = parseFloat(val || 0);
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 2
+        }).format(num);
+    };
+
+    // Calculate Overview Metrics dynamically across all employees
+    const overviewCalculations = React.useMemo(() => {
+        let totalDispersable = 0;
+        let totalCompliances = 0;
+        let totalCTC = 0;
+
+        let epfTotal = 0;
+        let esiTotal = 0;
+        let tdsTotal = 0;
+        let ptTotal = 0;
+        let otherTotal = 0;
+
+        let counts = { DRAFT: 0, APPROVED: 0, PAID: 0, GENERATED: 0, CANCELLED: 0 };
+
+        const mappedEmployees = employees.map(emp => {
+            const empIdStr = String(emp.id);
+            
+            // Find salary record for chosen month & year
+            const record = allSalaryRecords.find(r => 
+                (String(r.employee) === empIdStr || String(r.employee?.id) === empIdStr) &&
+                String(r.month) === String(selectedMonth) &&
+                String(r.year) === String(selectedYear)
+            );
+
+            // Fallback to base components
+            const comp = allSalaryComponents.find(c => 
+                String(c.employee) === empIdStr || String(c.employee?.id) === empIdStr
+            );
+
+            const gross = record ? parseFloat(record.gross_salary || 0) : parseFloat(comp?.gross_salary || 0);
+            const totalDeductions = record ? parseFloat(record.total_deductions || 0) : parseFloat(comp?.total_deductions || 0);
+            const netTakeHome = record ? parseFloat(record.net_salary || 0) : parseFloat(comp?.net_salary || 0);
+            const ctc = record ? parseFloat(record.cost_to_company || 0) : parseFloat(comp?.cost_to_company || 0);
+            const status = record?.status || 'DRAFT';
+
+            // Compliances calculation: EPF (employee+employer) + ESI (employee+employer) + TDS + PT + Other
+            const eeEPF = record ? parseFloat(record.deductions_EPF || 0) : parseFloat(comp?.deductions_EPF || 0);
+            const erEPF = record ? parseFloat(record.employer_epf || 0) : parseFloat(comp?.employer_epf || 0);
+            
+            const eeESI = record ? parseFloat(record.deductions_ESI || 0) : parseFloat(comp?.deductions_ESI || 0);
+            const erESI = record ? parseFloat(record.employer_esi || 0) : parseFloat(comp?.employer_esi || 0);
+
+            const tds = record ? parseFloat(record.deductions_TDS || 0) : parseFloat(comp?.deductions_TDS || 0);
+            const pt = record ? parseFloat(record.deductions_professional_tax || 0) : parseFloat(comp?.deductions_professional_tax || 0);
+            const other = record ? parseFloat(record.deductions_other || 0) : parseFloat(comp?.deductions_other || 0);
+
+            const empCompliance = (eeEPF + erEPF) + (eeESI + erESI) + tds + pt + other;
+
+            totalDispersable += netTakeHome;
+            totalCompliances += empCompliance;
+            totalCTC += ctc;
+
+            epfTotal += (eeEPF + erEPF);
+            esiTotal += (eeESI + erESI);
+            tdsTotal += tds;
+            ptTotal += pt;
+            otherTotal += other;
+
+            counts[status] = (counts[status] || 0) + 1;
+
+            return {
+                ...emp,
+                record,
+                comp,
+                gross,
+                totalDeductions,
+                netTakeHome,
+                ctc,
+                status,
+                empCompliance
+            };
+        });
+
+        return {
+            mappedEmployees,
+            totalDispersable,
+            totalCompliances,
+            totalCTC,
+            epfTotal,
+            esiTotal,
+            tdsTotal,
+            ptTotal,
+            otherTotal,
+            counts
+        };
+    }, [employees, allSalaryRecords, allSalaryComponents, selectedMonth, selectedYear]);
+
+    // Filter employees for Overview Table
+    const filteredOverviewEmployees = React.useMemo(() => {
+        return overviewCalculations.mappedEmployees.filter(emp => {
+            const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.toLowerCase();
+            const email = (emp.user?.email || '').toLowerCase();
+            const role = (emp.role || '').toLowerCase();
+            const query = searchQuery.toLowerCase();
+
+            const matchesSearch = fullName.includes(query) || email.includes(query) || role.includes(query);
+            const matchesStatus = statusFilter === 'ALL' || emp.status === statusFilter;
+
+            return matchesSearch && matchesStatus;
+        });
+    }, [overviewCalculations.mappedEmployees, searchQuery, statusFilter]);
+
+    // =========================================================================
+    // DETAIL VIEW HANDLERS
+    // =========================================================================
     const handleChange = (field, value) => {
         setFormData(prev => ({
             ...prev,
@@ -243,7 +383,6 @@ const MonthlySalary = () => {
         }));
     };
 
-    // Manual sync button handler for Reimbursements & Advances
     const handleSyncClaimsAndAdvances = () => {
         const approvedReimbSum = linkedReimbursements
             .filter(r => r.status === 'APPROVED')
@@ -265,7 +404,7 @@ const MonthlySalary = () => {
         });
     };
 
-    // Live calculation of totals
+    // Live calculation of totals for Detail View
     const basic = parseFloat(formData.basic_salary || 0);
     const hra = parseFloat(formData.house_rent_allowence || 0);
     const conveyance = parseFloat(formData.conveyance_allowence || 0);
@@ -293,7 +432,6 @@ const MonthlySalary = () => {
     const employerEsi = parseFloat(formData.employer_esi || 0);
     const costToCompany = grossSalary + employerEpf + employerEsi;
 
-    // Save Payroll Record handler
     const handleSaveRecord = async () => {
         setIsSaving(true);
         setMessage(null);
@@ -344,7 +482,7 @@ const MonthlySalary = () => {
                 setSalaryRecord(res.data);
                 setMessage({ type: 'success', text: 'New monthly payroll record created & saved!' });
             }
-            fetchPayrollRecord();
+            fetchSinglePayrollRecord();
         } catch (err) {
             console.error("Save error:", err);
             setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to save payroll record.' });
@@ -353,7 +491,6 @@ const MonthlySalary = () => {
         }
     };
 
-    // Mark as PAID handler
     const handleMarkAsPaid = async () => {
         if (!recordId) {
             alert("Please save the payroll record first before marking as PAID.");
@@ -369,7 +506,7 @@ const MonthlySalary = () => {
         try {
             const res = await axiosInstance.post(`../payroll/salary-records/${recordId}/mark-paid/`);
             setMessage({ type: 'success', text: res.data.message || 'Payroll marked as PAID!' });
-            fetchPayrollRecord();
+            fetchSinglePayrollRecord();
         } catch (err) {
             console.error("Mark paid error:", err);
             setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to mark payroll as PAID.' });
@@ -387,36 +524,254 @@ const MonthlySalary = () => {
 
     const targetEmployee = employees.find(e => String(e.id) === String(selectedEmployeeId));
 
+    // =========================================================================
+    // RENDER OVERVIEW DASHBOARD VIEW
+    // =========================================================================
+    if (isOverviewMode) {
+        return (
+            <div className="monthly-salary-container">
+                {/* Header */}
+                <div className="ms-header">
+                    <div className="ms-header-title">
+                        <div style={{ marginBottom: '6px' }}>
+                            <span className="landing-pill-tag">
+                                <span className="tag-dot"></span> PAYROLL ENGINE
+                            </span>
+                        </div>
+                        <h1>
+                            Monthly Payroll <span className="volt-highlight">Dashboard.</span>
+                        </h1>
+                        <p>Total dispersable compensation, statutory compliances, and employee net take-home salaries</p>
+                    </div>
+
+                    <div className="ms-selector-group">
+                        {/* Month Picker */}
+                        <select 
+                            className="ms-select-box"
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                        >
+                            {MONTH_OPTIONS.map(m => (
+                                <option key={m.value} value={m.value}>{m.label}</option>
+                            ))}
+                        </select>
+
+                        {/* Year Picker */}
+                        <select 
+                            className="ms-select-box"
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        >
+                            {[2024, 2025, 2026, 2027].map(y => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                {/* Top Metrics Executive Summary */}
+                {loadingOverview ? (
+                    <div className="po-metrics-grid">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="po-skeleton-card">
+                                <div className="po-skeleton-line" style={{ width: '40%', height: '16px' }}></div>
+                                <div className="po-skeleton-line" style={{ width: '70%', height: '36px' }}></div>
+                                <div className="po-skeleton-line" style={{ width: '50%', height: '14px' }}></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="po-metrics-grid">
+                        {/* Card 1: Total Dispersable Salary */}
+                        <div className="po-card po-card-highlight">
+                            <div className="po-card-header">
+                                <span className="po-card-title">Total Dispersable Salary</span>
+                                <div className="po-card-icon">💰</div>
+                            </div>
+                            <div className="po-card-value">
+                                {formatINR(overviewCalculations.totalDispersable)}
+                            </div>
+                            <div className="po-card-subtext">
+                                <span className="po-badge-green">
+                                    ✓ Net Take-Home Payout
+                                </span>
+                                <span>Across {employees.length} Employee{employees.length !== 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
+
+                        {/* Card 2: Total Statutory Compliances */}
+                        <div className="po-card">
+                            <div className="po-card-header">
+                                <span className="po-card-title">Statutory Compliances</span>
+                                <div className="po-card-icon">🏛</div>
+                            </div>
+                            <div className="po-card-value">
+                                {formatINR(overviewCalculations.totalCompliances)}
+                            </div>
+                            <div className="po-card-subtext" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem' }}>
+                                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Employer Statutory & Tax Liabilities</span>
+                                <div className="po-compliance-pills">
+                                    <span className="po-comp-item">EPF:<strong>{formatINR(overviewCalculations.epfTotal)}</strong></span>
+                                    <span className="po-comp-item">ESI:<strong>{formatINR(overviewCalculations.esiTotal)}</strong></span>
+                                    <span className="po-comp-item">TDS:<strong>{formatINR(overviewCalculations.tdsTotal)}</strong></span>
+                                    <span className="po-comp-item">PT:<strong>{formatINR(overviewCalculations.ptTotal)}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 3: Cost To Company (CTC) */}
+                        <div className="po-card po-card-dark">
+                            <div className="po-card-header">
+                                <span className="po-card-title">Total Cost to Company</span>
+                                <div className="po-card-icon">🏢</div>
+                            </div>
+                            <div className="po-card-value">
+                                {formatINR(overviewCalculations.totalCTC)}
+                            </div>
+                            <div className="po-card-subtext">
+                                <span style={{ color: '#10B981', fontWeight: 700 }}>Gross + Employer Contributions</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Toolbar & Filters */}
+                <div className="po-toolbar">
+                    <div className="po-search-box">
+                        <span className="po-search-icon">🔍</span>
+                        <input 
+                            type="text" 
+                            className="po-search-input"
+                            placeholder="Search employee by name, email, or role..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="po-filter-tabs">
+                        {['ALL', 'DRAFT', 'APPROVED', 'PAID'].map(st => (
+                            <button 
+                                key={st}
+                                className={`po-tab-btn ${statusFilter === st ? 'active' : ''}`}
+                                onClick={() => setStatusFilter(st)}
+                            >
+                                {st} {st !== 'ALL' && `(${overviewCalculations.counts[st] || 0})`}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Employee List Table */}
+                <div className="po-table-card">
+                    {loadingOverview ? (
+                        <div className="att-loading-zone">
+                            <div className="att-pulse-loader"></div>
+                            <p style={{ color: '#64748B', fontWeight: 600 }}>Loading employee compensation list...</p>
+                        </div>
+                    ) : filteredOverviewEmployees.length === 0 ? (
+                        <div className="po-empty-state">
+                            <h3>No employees found</h3>
+                            <p>No employee records match the search query or status filter.</p>
+                        </div>
+                    ) : (
+                        <div className="po-table-wrapper">
+                            <table className="po-table">
+                                <thead>
+                                    <tr>
+                                        <th>Employee Profile</th>
+                                        <th>Gross Compensation</th>
+                                        <th>Deductions & Tax</th>
+                                        <th>Net Take-Home Salary</th>
+                                        <th>Status</th>
+                                        <th style={{ textAlign: 'right' }}>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredOverviewEmployees.map(emp => {
+                                        const initials = `${emp.first_name?.[0] || 'E'}${emp.last_name?.[0] || ''}`.toUpperCase();
+                                        const nameStr = emp.first_name ? `${emp.first_name} ${emp.last_name || ''}` : emp.user?.email || 'Employee';
+
+                                        return (
+                                            <tr key={emp.id}>
+                                                <td>
+                                                    <div className="po-emp-cell">
+                                                        <div className="po-emp-avatar">{initials}</div>
+                                                        <div>
+                                                            <div className="po-emp-name">{nameStr}</div>
+                                                            <div className="po-emp-sub">{emp.role || 'Staff Member'} • {emp.user?.email}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ fontWeight: 700, color: '#0F172A' }}>
+                                                        {formatINR(emp.gross)}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#64748B' }}>Base & Allowances</div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ fontWeight: 600, color: '#DC2626' }}>
+                                                        - {formatINR(emp.totalDeductions)}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                                                        EPF/ESI/TDS/LOP
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="po-net-badge">
+                                                        <span className="po-net-amount">{formatINR(emp.netTakeHome)}</span>
+                                                        <span className="po-net-label">Take Home</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className={`status-pill-lg ${emp.status}`}>
+                                                        ● {emp.status}
+                                                    </span>
+                                                </td>
+                                                <td style={{ textAlign: 'right' }}>
+                                                    <button 
+                                                        className="po-btn-view-more"
+                                                        onClick={() => navigate(`/employees/${emp.id}/payroll`)}
+                                                    >
+                                                        View More →
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // =========================================================================
+    // RENDER SINGLE EMPLOYEE DETAILED PAYROLL VIEW (When /employees/:id/payroll)
+    // =========================================================================
     return (
         <div className="monthly-salary-container">
+            {/* Back Button */}
+            <button className="ms-back-btn" onClick={() => navigate('/payroll')}>
+                ← Back to Payroll Dashboard
+            </button>
+
             {/* Header */}
             <div className="ms-header">
                 <div className="ms-header-title">
                     <div style={{ marginBottom: '6px' }}>
                         <span className="landing-pill-tag">
-                            <span className="tag-dot"></span> PAYROLL ENGINE
+                            <span className="tag-dot"></span> PAYROLL MANAGER
                         </span>
                     </div>
                     <h1>
-                        Monthly Payroll <span className="volt-highlight">Manager.</span>
+                        Salary Breakdown <span className="volt-highlight">Statement.</span>
                     </h1>
-                    <p>View, edit, compute, and disburse monthly employee salary statements</p>
+                    <p>View, edit, compute, and disburse detailed monthly salary statement for {targetEmployee?.first_name || targetEmployee?.user?.email || 'Employee'}</p>
                 </div>
 
                 <div className="ms-selector-group">
-                    {/* Employee Picker */}
-                    <select 
-                        className="ms-select-box"
-                        value={selectedEmployeeId}
-                        onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                    >
-                        {employees.map(emp => (
-                            <option key={emp.id} value={emp.id}>
-                                {emp.first_name || emp.user?.email} ({emp.role})
-                            </option>
-                        ))}
-                    </select>
-
                     {/* Month Picker */}
                     <select 
                         className="ms-select-box"
@@ -466,7 +821,7 @@ const MonthlySalary = () => {
 
                     <div style={{ marginLeft: '1rem' }}>
                         <span style={{ fontSize: '0.85rem', color: '#64748B' }}>Employee: </span>
-                        <strong style={{ color: '#0F172A' }}>{targetEmployee?.first_name || targetEmployee?.user?.email}</strong>
+                        <strong style={{ color: '#0F172A' }}>{targetEmployee?.first_name ? `${targetEmployee.first_name} ${targetEmployee.last_name || ''}` : targetEmployee?.user?.email}</strong>
                     </div>
                 </div>
 
@@ -498,7 +853,7 @@ const MonthlySalary = () => {
                 </div>
             </div>
 
-            {loading ? (
+            {loadingDetail ? (
                 <div className="att-loading-zone">
                     <div className="att-pulse-loader"></div>
                     <p style={{ color: '#64748B', fontWeight: 600 }}>Loading monthly salary statement...</p>

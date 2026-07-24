@@ -98,6 +98,7 @@ class EmployeeProfile(RLSModel):
     ROLE_CHOICES = [
         ('OWNER', 'Owner / HR Administrator'),
         ('EMPLOYEE', 'Standard Employee'),
+        ('CONTRACTOR', 'Contractor')
         
     ]
     EMPLOYMENT_TYPE_CHOICES = [
@@ -160,3 +161,5 @@ class EmployeeProfile(RLSModel):
 
     def __str__(self):
         return f"{self.user.email} - {self.role} ({self.tenant_id})"
+
+
