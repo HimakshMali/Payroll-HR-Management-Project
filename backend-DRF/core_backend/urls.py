@@ -22,5 +22,6 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')), 
     path('payroll/', include('payroll.urls')),
     path('whatsapp/', include('whatsapp.urls')),
+    path('api/whatsapp/', include('whatsapp.urls')),
     path('agent/', include('ai_agent.urls')),
 ]

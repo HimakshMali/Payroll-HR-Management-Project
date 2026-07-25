@@ -222,7 +222,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 tenant=new_org,
                 user=user,
                 role='OWNER',
-                phone_number=0,
+                phone_number="",
                 address="Please update address details"
             )
             

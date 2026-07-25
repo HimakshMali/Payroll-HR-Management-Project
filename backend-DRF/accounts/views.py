@@ -211,7 +211,7 @@ class GoogleRegisterView(APIView):
                     tenant=new_org,
                     user=new_user, # Passing the validated, saved user instance object
                     role='OWNER',
-                    phone_number=0,
+                    phone_number="",
                     address="Please update address details"
                 )
 

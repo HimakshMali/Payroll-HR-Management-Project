@@ -8,9 +8,31 @@ from google import genai
 from google.genai import types
 from django.conf import settings
 from accounts.models import EmployeeProfile
-from payroll.models import Reimbursement , AdvancePayment
+from payroll.models import Reimbursement, AdvancePayment
+from ai_agent.models import AgentActivity, AgentHistory
 
 client = genai.Client(api_key = getattr(settings,'GEMINI_API_KEY', os.getenv("GEMINI_API_KEY")))
+
+import re
+
+def clean_json_text(raw_text: str) -> str:
+    if not raw_text:
+        return "{}"
+    text = raw_text.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\s*```$", "", text)
+    text = re.sub(r",\s*([}\]])", r"\1", text)
+    
+    start_idx = text.find('{')
+    if start_idx != -1:
+        try:
+            decoder = json.JSONDecoder()
+            obj, _ = decoder.raw_decode(text[start_idx:])
+            return json.dumps(obj)
+        except Exception:
+            pass
+    return text.strip()
 
 def safe_decimal(val, default="0.00") -> Decimal:
     if val is None:
@@ -61,13 +83,13 @@ Available Categories (only if intent is REIMBURSEMENT):
 - TRAVEL, FOOD, MEDICAL, EQUIPMENT, SOFTWARE, RENT, UTILITIES, COMMUNICATION, 
   OFFICE_SUPPLIES, LOGISTICS, MAINTENANCE, CLIENT_MEETING, MARKETING, TEAM_WELFARE, TRAINING, OTHER
 
-Output format (MUST BE RAW JSON ONLY):
+Output format (MUST BE STICT VALID RAW JSON ONLY):
 {
-  "intent": "ADVANCE" | "REIMBURSEMENT",
-  "employee_name": "extracted name string or null",
-  "amount": number,
+  "intent": "REIMBURSEMENT",
+  "employee_name": "extracted employee name string or null",
+  "amount": 4000,
   "reason": "concise reason string",
-  "category": "category string or null"
+  "category": "SOFTWARE"
 }
 """
 def process_reimbursement_message(employee_id: int, user_text: str) -> Reimbursement:
@@ -161,13 +183,14 @@ def process_advance_payment_message(employee_id: int, user_text: str) -> Advance
     
 
 
-def process_search_command(tenant, promt_text : str = None, confirmed : bool = False, parsed_data : dict = None):
+def process_search_command(tenant, promt_text: str = None, confirmed: bool = False, parsed_data: dict = None, channel: str = 'SEARCH_BAR'):
     if confirmed and parsed_data:
         intent = parsed_data.get("intent")
         employee_id = parsed_data.get("employee_id")
         amount = Decimal(str(parsed_data.get("amount", "0.00")))
         reason = parsed_data.get("reason", "")
         category = parsed_data.get("category", "OTHER")
+        user_message = parsed_data.get("user_message") or promt_text or reason
 
         try:
             employee = EmployeeProfile.objects.get(id=employee_id, tenant=tenant)
@@ -183,10 +206,23 @@ def process_search_command(tenant, promt_text : str = None, confirmed : bool = F
                 amount=amount,
                 reason=reason,
             )
+            msg = f"Successfully created Advance Payment request of ₹{amount} for {emp_name}."
+            AgentActivity.objects.create(
+                tenant=tenant,
+                employee=employee,
+                user_message=user_message,
+                intent='ADVANCE',
+                ai_response=msg,
+                amount=amount,
+                reason=reason,
+                advance_payment=record,
+                channel=channel,
+                status='ACTIVE'
+            )
             return {
                 "status": "success",
                 "type": "ADVANCE",
-                "message": f"Successfully created Advance Payment request of ₹{amount} for {emp_name}.",
+                "message": msg,
                 "record_id": record.id
             }
         elif intent == "REIMBURSEMENT":
@@ -198,16 +234,37 @@ def process_search_command(tenant, promt_text : str = None, confirmed : bool = F
                 category=category,
                 status='PENDING'
             )
+            msg = f"Successfully logged Reimbursement claim of ₹{amount} under {category} for {emp_name}."
+            AgentActivity.objects.create(
+                tenant=tenant,
+                employee=employee,
+                user_message=user_message,
+                intent='REIMBURSEMENT',
+                ai_response=msg,
+                amount=amount,
+                category=category,
+                reason=reason,
+                reimbursement=record,
+                channel=channel,
+                status='ACTIVE'
+            )
             return {
                 "status": "success",
                 "type": "REIMBURSEMENT",
-                "message": f"Successfully logged Reimbursement claim of ₹{amount} under {category} for {emp_name}.",
+                "message": msg,
                 "record_id": record.id
             }
         return {"status": "error", "message": "Could not determine transaction intent."}
 
     if not promt_text:
         return {"status": "error", "message": "Prompt is required."}
+
+    # Record Agent History query
+    AgentHistory.objects.create(
+        tenant=tenant,
+        user_query=promt_text,
+        channel=channel
+    )
 
     try:
         response = client.models.generate_content(
@@ -235,9 +292,12 @@ def process_search_command(tenant, promt_text : str = None, confirmed : bool = F
                 "message": f"AI service is currently unavailable or quota is exhausted. Details: {str(e)}"
             }
 
+    raw_text = getattr(response, 'text', '') or ''
+    cleaned_text = clean_json_text(raw_text)
     try:
-        parsed = json.loads(response.text)
+        parsed = json.loads(cleaned_text)
     except Exception as e:
+        print(f"Failed to parse AI response. Raw AI output was: '{raw_text}'")
         return {
             "status": "error",
             "message": f"Failed to parse AI response. Details: {str(e)}"
@@ -294,6 +354,7 @@ def process_search_command(tenant, promt_text : str = None, confirmed : bool = F
             "amount": float(amount),
             "reason": reason,
             "category": category,
+            "user_message": promt_text,
             "message": f"Please confirm creating {intent.lower()} request of ₹{amount} for {emp_name}."
         }
 

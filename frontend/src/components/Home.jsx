@@ -3,38 +3,53 @@ import axiosInstance from './AxiosInstance';
 import '../style/home.css';
 
 const Home = () => {
-
-    
     const [stats, setStats] = useState({
         totalEmployees: 0,
         totalPayroll: 0,
         averageSalary: 0,
     });
 
+    const [activities, setActivities] = useState([]);
+    const [dismissedIds, setDismissedIds] = useState([]);
+    const [expandedActivityId, setExpandedActivityId] = useState(null);
+    const [rejectingId, setRejectingId] = useState(null);
+
     const [loading, setLoading] = useState(true);
+    const [activityLoading, setActivityLoading] = useState(true);
+
+    const fetchStats = async () => {
+        try {
+            const response = await axiosInstance.get('/employees/');
+            const data = response.data || [];
+            const total = data.reduce((acc, emp) => acc + Number(emp.basic_salary || 0), 0);
+            const avg = data.length ? Math.round(total / data.length) : 0;
+            setStats({
+                totalEmployees: data.length,
+                totalPayroll: total,
+                averageSalary: avg
+            });
+        } catch (err) {
+            console.error("Failed to fetch dashboard stats:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchActivities = async () => {
+        try {
+            setActivityLoading(true);
+            const res = await axiosInstance.get('../agent/activities/');
+            setActivities(res.data || []);
+        } catch (err) {
+            console.error("Failed to fetch agent activities:", err);
+        } finally {
+            setActivityLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const response = await axiosInstance.get('/employees/');
-                const data = response.data || [];
-                const total = data.reduce((acc, emp) => acc + Number(emp.basic_salary || 0), 0);
-                const avg = data.length ? Math.round(total / data.length) : 0;
-                setStats({
-                    totalEmployees: data.length,
-                    totalPayroll: total,
-                    averageSalary: avg
-                });
-            } catch (err) {
-                console.error("Failed to fetch dashboard stats:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchStats();
-
-
-
+        fetchActivities();
     }, []);
 
     const [prompt, setPrompt] = useState('');
@@ -63,6 +78,7 @@ const Home = () => {
                 });
                 if (res.data.status === 'success') {
                     setPrompt('');
+                    fetchActivities();
                 }
             }
         } catch (err) {
@@ -91,7 +107,8 @@ const Home = () => {
                     employee_id: details.employee_id,
                     amount: details.amount,
                     reason: details.reason,
-                    category: details.category
+                    category: details.category,
+                    user_message: details.user_message
                 }
             });
             setResponse({
@@ -100,6 +117,7 @@ const Home = () => {
             });
             if (res.data.status === 'success') {
                 setPrompt('');
+                fetchActivities();
             }
         } catch (err) {
             const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to process request';
@@ -115,6 +133,34 @@ const Home = () => {
     const handleCancel = () => {
         setResponse(null);
     };
+
+    const toggleDetails = (id) => {
+        setExpandedActivityId(prev => prev === id ? null : id);
+    };
+
+    const handleReject = async (id) => {
+        if (!window.confirm("Are you sure you want to reject this action? The database record will be permanently deleted.")) {
+            return;
+        }
+
+        setRejectingId(id);
+        try {
+            await axiosInstance.post(`../agent/activities/${id}/reject/`);
+            setActivities(prev => prev.filter(act => act.id !== id));
+            fetchStats();
+        } catch (err) {
+            console.error("Failed to reject activity:", err);
+            alert(err.response?.data?.message || "Failed to reject activity");
+        } finally {
+            setRejectingId(null);
+        }
+    };
+
+    const handleDismiss = (id) => {
+        setDismissedIds(prev => [...prev, id]);
+    };
+
+    const activeActivities = activities.filter(act => act.status !== 'REJECTED' && !dismissedIds.includes(act.id));
 
     return (
         <div className="glass-dashboard">
@@ -171,19 +217,95 @@ const Home = () => {
                     <span className="landing-pill-tag"><span className="tag-dot"></span> LIVE DISPATCH</span>
                     <h3 className="section-heading">Recent Agent Activity</h3>
                 </div>
-                <div className="activity-card dark-forest-card">
-                    <div className="activity-content">
-                        <span className="agent-badge volt-badge">
-                            <span className="dot"></span> WhatsApp Agent
-                        </span>
-                        <p className="activity-text">
-                            Added <strong>10,000 Rs advance</strong> in Ravi's account.
-                        </p>
-                    </div>
-                    <div className="activity-actions">
-                        <button className="btn-volt">View Details</button>
-                        <button className="btn-forest-outline">Reject</button>
-                    </div>
+
+                <div className="activity-list-container">
+                    {activityLoading ? (
+                        <div className="no-activity-placeholder">Loading recent activities...</div>
+                    ) : activeActivities.length === 0 ? (
+                        <div className="no-activity-placeholder">No active agent activity. Send a query via WhatsApp or Search Bar!</div>
+                    ) : (
+                        activeActivities.map((act) => {
+                            const isWhatsApp = act.channel === 'WHATSAPP';
+                            const isExpanded = expandedActivityId === act.id;
+
+                            return (
+                                <div key={act.id} className="activity-card-wrapper">
+                                    <div className="light-glass-activity-card">
+                                        <div className="activity-content">
+                                            <span className={`agent-badge ${isWhatsApp ? 'whatsapp-badge' : 'searchbar-badge'}`}>
+                                                <span className="dot"></span> {act.channel_display}
+                                            </span>
+                                            <p className="activity-text">
+                                                {act.ai_response}
+                                            </p>
+                                        </div>
+                                        <div className="activity-actions-group">
+                                            <button 
+                                                type="button"
+                                                className="btn-glass-details" 
+                                                onClick={() => toggleDetails(act.id)}
+                                            >
+                                                {isExpanded ? 'Hide Details' : 'View Details'}
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                className="btn-glass-reject"
+                                                onClick={() => handleReject(act.id)}
+                                                disabled={rejectingId === act.id}
+                                            >
+                                                {rejectingId === act.id ? 'Deleting...' : 'Reject'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-glass-cross"
+                                                title="Dismiss card from home screen"
+                                                onClick={() => handleDismiss(act.id)}
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {isExpanded && (
+                                        <div className="light-activity-details-drawer">
+                                            <div className="light-detail-query">
+                                                <span className="light-detail-box-label">Original User Query:</span>
+                                                <div style={{ marginTop: '4px', fontWeight: 500 }}>"{act.user_message}"</div>
+                                            </div>
+                                            <div className="details-grid">
+                                                <div className="detail-box">
+                                                    <span className="light-detail-box-label">Target Employee : </span>
+                                                    <span className="light-detail-box-value">{act.employee_name}</span>
+                                                </div>
+                                                <div className="detail-box">
+                                                    <span className="light-detail-box-label">Action Intent :  </span>
+                                                    <span className="light-detail-box-value">{act.intent === 'ADVANCE' ? 'Salary Advance' : 'Reimbursement Claim'}</span>
+                                                </div>
+                                                <div className="detail-box">
+                                                    <span className="light-detail-box-label">Amount :   </span>
+                                                    <span className="light-detail-box-value">₹{Number(act.amount).toLocaleString('en-IN')}</span>
+                                                </div>
+                                                <div className="detail-box">
+                                                    <span className="light-detail-box-label">Category :  </span>
+                                                    <span className="light-detail-box-value">{act.category}</span>
+                                                </div>
+                                                <div className="detail-box">
+                                                    <span className="detail-box">
+                                                        <span className="light-detail-box-label">Source Channel :</span>
+                                                        <span className="light-detail-box-value">{act.channel_display}</span>
+                                                    </span>
+                                                </div>
+                                                <div className="detail-box">
+                                                    <span className="light-detail-box-label">Timestamp</span>
+                                                    <span className="light-detail-box-value">{new Date(act.created_at).toLocaleString('en-IN')}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </section>
 
