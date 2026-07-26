@@ -102,4 +102,56 @@ class ContractorWork(RLSModel):
 
     def __str__(self):
         name = f"{self.contractor.first_name or ''} {self.contractor.last_name or ''}".strip()
-        return f"{name or self.contractor.email} - {self.get_payment_type_display()} ({self.status})"
+        return f"{name or self.contractor.email} - {self.get_payment_type_display()} ({self.work_status})"
+
+
+class ContractorPayments(RLSModel):
+
+    PAYMENT_METHOD_CHOICES = [
+        ('BANK_TRANSFER', 'Bank Transfer'),
+        ('UPI', 'UPI'),
+        ('CHEQUE', 'Cheque'),
+        ('CASH', 'Cash'),
+        ('OTHER', 'Other'),
+    ]
+    tenant = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    contractor = models.ForeignKey(ContractorProfile, on_delete=models.CASCADE)
+    work = models.ForeignKey(ContractorWork, on_delete=models.CASCADE)
+
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
+    payment_date = models.DateField(null=True, blank=True)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='BANK_TRANSFER')
+    payment_status = models.CharField(max_length=20, choices=ContractorWork.WORK_STATUS, default='PENDING')
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    def __str__(self):
+        name = f"{self.contractor.first_name or ''} {self.contractor.last_name or ''}".strip()
+        return f"{name or self.contractor.email} - {self.get_payment_method_display()} ({self.payment_status})"
+
+
+class ContractorWorkMilestone(RLSModel):
+    MILESTONE_STATUS = [
+        ('PENDING', 'Pending'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('COMPLETED', 'Completed'),
+        ('DELAYED', 'Delayed'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+
+    tenant = models.ForeignKey(Organisation, on_delete=models.CASCADE)
+    work = models.ForeignKey(ContractorWork, on_delete=models.CASCADE, related_name='milestones')
+    title = models.CharField(max_length=200)
+    description = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=MILESTONE_STATUS, default='PENDING')
+    due_date = models.DateField(null=True, blank=True)
+    completed_at = models.DateField(null=True, blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.get_status_display()})"
+    
+    

@@ -34,6 +34,9 @@ import AttendancePage from './components/AttendancePage';
 import EmployeeAttendance from './components/EmployeeAttendance';
 import MonthlySalary from './components/MonthlySalary';
 import PayslipPreview from './components/PayslipPreview';
+import Contractors from './components/Contractors';
+import ContractorProfileView from './components/ContractorProfileView';
+import ContractorWorkView from './components/ContractorWorkView';
 import './style/layout.css';
 
 function App() {
@@ -79,6 +82,9 @@ function App() {
                                 <Route path="/payroll" element={<MonthlySalary />} />
                                 <Route path="/payroll/print/:salaryRecordId" element={<PayslipPreview />} />
                                 <Route path="/employees/:id/payroll" element={<MonthlySalary />} />
+                                <Route path="/contractors" element={<Contractors />} />
+                                <Route path="/contractors/:id" element={<ContractorProfileView />} />
+                                <Route path="/contractors/work/:workId" element={<ContractorWorkView />} />
                                 <Route path="/org" element={<OrganizationProfile />} />
                                 <Route path="/add-employee" element={<AddEmployee />} />
                                 <Route path="*" element={<Navigate to="/agent" replace />} />
@@ -92,6 +98,9 @@ function App() {
                                 <Route path="/payroll" element={<MonthlySalary />} />
                                 <Route path="/payroll/print/:salaryRecordId" element={<PayslipPreview />} />
                                 <Route path="/employees/:id/payroll" element={<MonthlySalary />} />
+                                <Route path="/contractors" element={<Contractors />} />
+                                <Route path="/contractors/:id" element={<ContractorProfileView />} />
+                                <Route path="/contractors/work/:workId" element={<ContractorWorkView />} />
                                 <Route path="*" element={<Navigate to="/profile" replace />} />
                             </>
                         )}
